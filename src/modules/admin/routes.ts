@@ -12,6 +12,58 @@ import * as service from './service';
 import * as validators from './validators';
 export const adminRoutes = Router();
 adminRoutes.use(admin);
+
+adminRoutes.get('/import/providers', async (_req, res) => {
+  const providers = [
+    {
+      name: 'configured',
+      baseUrl: process.env.MUSIC_IMPORT_PROVIDER_BASE_URL || null,
+      allowAudio: !!process.env.MUSIC_IMPORT_ALLOW_AUDIO && process.env.MUSIC_IMPORT_ALLOW_AUDIO === 'true',
+      allowImages: !!process.env.MUSIC_IMPORT_ALLOW_IMAGES && process.env.MUSIC_IMPORT_ALLOW_IMAGES !== 'false',
+      permittedFields: (process.env.MUSIC_IMPORT_PERMITTED_FIELDS || '').split(',').map((value) => value.trim()).filter(Boolean),
+    },
+  ];
+  res.json({ data: providers.filter((provider) => provider.baseUrl) });
+});
+
+adminRoutes.get('/import/search', async (req, res) => {
+  const input = z
+    .object({
+      q: z.string().trim().min(1).max(200),
+      provider: z.string().trim().max(100).default('configured'),
+    })
+    .parse(req.query);
+  res.json({ data: await service.searchMusicImport(input.q, input.provider) });
+});
+
+adminRoutes.post('/import', async (req, res) => {
+  const input = z
+    .object({
+      provider: z.string().trim().max(100).default('configured'),
+      externalSongId: z.string().trim().min(1).max(200),
+      title: z.string().trim().min(1).max(200),
+      artist: z.string().trim().max(200).optional(),
+      album: z.string().trim().max(200).optional(),
+      language: z.string().trim().max(50).optional(),
+      duration: z.number().int().min(0).max(86400).optional(),
+      genre: z.string().trim().max(100).optional(),
+      year: z.number().int().min(1900).max(2100).optional(),
+      trackNumber: z.number().int().min(1).max(500).optional(),
+      discNumber: z.number().int().min(1).max(20).optional(),
+      format: z.string().trim().max(20).optional(),
+      bitrate: z.number().int().min(1).max(2000).optional(),
+      artwork: z.string().url().max(2000).optional(),
+      coverUrl: z.string().url().max(2000).optional(),
+      url: z.string().url().max(2000).optional(),
+      category: z.union([z.string().trim().max(100), z.array(z.string().trim().max(100))]).optional(),
+      lyrics: z.string().max(50000).optional(),
+      sourceLicense: z.string().trim().max(500).optional(),
+    })
+    .strict()
+    .parse(req.body);
+  res.status(201).json(await service.importMusicRecord(input));
+});
+
 const resources: Record<string, { model: any; schema: z.AnyZodObject }> = {
   artists: { model: Artist, schema: validators.artistInput },
   albums: { model: Album, schema: validators.albumInput },
@@ -107,6 +159,18 @@ adminRoutes.delete('/artists/:id', async (req, res) => {
   );
   const artist = await Artist.findByIdAndDelete(artistId);
   ensure(artist, 404, 'NOT_FOUND');
+  res.status(204).send();
+});
+adminRoutes.delete('/categories/:id', async (req, res) => {
+  const categoryId = id.parse(req.params.id);
+  const category = await Category.findByIdAndDelete(categoryId);
+  ensure(category, 404, 'NOT_FOUND');
+  res.status(204).send();
+});
+adminRoutes.delete('/tags/:id', async (req, res) => {
+  const tagId = id.parse(req.params.id);
+  const tag = await Tag.findByIdAndDelete(tagId);
+  ensure(tag, 404, 'NOT_FOUND');
   res.status(204).send();
 });
 adminRoutes.delete('/playlists/:id', controller.deletePlaylistsId);

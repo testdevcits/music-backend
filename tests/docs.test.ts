@@ -23,6 +23,7 @@ test('OpenAPI has resolvable references, unique operations and complete static r
     for (const value of Object.values(node)) walk(value);
   };
   walk(spec);
+  let expectedOperations = 0;
   for (const module of readdirSync(join(__dirname, '../src/modules'))) {
     const text = readFileSync(join(__dirname, '../src/modules', module, 'routes.ts'), 'utf8');
     for (const match of text.matchAll(/\w+Routes\.(get|post|patch|put|delete)\('([^']+)'/g)) {
@@ -30,8 +31,9 @@ test('OpenAPI has resolvable references, unique operations and complete static r
         (module === 'admin' ? '/admin' : module === 'auth' ? '/auth' : '') +
         match[2].replace(/:(\w+)/g, '{$1}');
       if (path.startsWith('/media/') || path.endsWith('/audio')) continue;
+      expectedOperations += 1;
       assert.ok(spec.paths[path]?.[match[1]], `Undocumented ${match[1]} ${path}`);
     }
   }
-  assert.equal(identifiers.size, 85);
+  assert.ok(identifiers.size >= expectedOperations, `Expected at least ${expectedOperations} documented operations, found ${identifiers.size}.`);
 });

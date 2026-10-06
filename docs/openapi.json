@@ -4834,6 +4834,228 @@
             }
           }
         }
+      },
+      "delete": {
+        "summary": "Delete artists",
+        "operationId": "deleteAdminArtistsId",
+        "tags": ["admin"],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permission denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "description": "Requires an administrator role.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            }
+          }
+        ]
+      }
+    },
+    "/admin/import/providers": {
+      "get": {
+        "summary": "List configured import providers",
+        "operationId": "getAdminImportProviders",
+        "tags": ["admin"],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": { "type": "string" },
+                          "baseUrl": { "type": ["string", "null"] },
+                          "allowAudio": { "type": "boolean" },
+                          "allowImages": { "type": "boolean" },
+                          "permittedFields": { "type": "array", "items": { "type": "string" } }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Requires an administrator role."
+      }
+    },
+    "/admin/import/search": {
+      "get": {
+        "summary": "Search provider catalog",
+        "operationId": "getAdminImportSearch",
+        "tags": ["admin"],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": { "type": "object" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Requires an administrator role.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "in": "query",
+            "name": "provider",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "default": "configured"
+            }
+          }
+        ]
+      }
+    },
+    "/admin/import": {
+      "post": {
+        "summary": "Import a draft song from a provider",
+        "operationId": "postAdminImport",
+        "tags": ["admin"],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "description": "Requires an administrator role.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "provider": { "type": "string" },
+                  "externalSongId": { "type": "string" },
+                  "title": { "type": "string" },
+                  "artist": { "type": "string" },
+                  "album": { "type": "string" },
+                  "genre": { "type": "string" },
+                  "year": { "type": "integer" },
+                  "duration": { "type": "integer" },
+                  "artwork": { "type": "string", "format": "uri" },
+                  "coverUrl": { "type": "string", "format": "uri" },
+                  "url": { "type": "string", "format": "uri" },
+                  "category": { "type": ["string", "array"] },
+                  "lyrics": { "type": "string" }
+                },
+                "required": ["provider", "externalSongId", "title"],
+                "additionalProperties": true
+              }
+            }
+          }
+        }
       }
     },
     "/admin/albums": {

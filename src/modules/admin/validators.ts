@@ -10,6 +10,11 @@ export const albumInput = z
   .strict();
 export const categoryInput = z.object({ name, slug, parent: id.nullable().default(null) }).strict();
 export const tagInput = z.object({ name, slug }).strict();
+const mediaUrl = z.string().url().max(2000);
+const nullableTimestamp = z
+  .union([z.number().int().min(0), z.string().datetime(), z.coerce.date()])
+  .nullable()
+  .optional();
 export const songInput = z
   .object({
     title: name,
@@ -17,6 +22,21 @@ export const songInput = z
     album: id.optional(),
     language: z.string().min(2).max(50),
     lyrics: z.string().max(50000).optional(),
+    duration: z.number().int().min(0).max(86400).optional(),
+    genre: z.string().max(100).optional(),
+    year: z.number().int().min(1900).max(2100).optional(),
+    trackNumber: z.number().int().min(1).max(500).optional(),
+    discNumber: z.number().int().min(1).max(20).optional(),
+    format: z.string().max(20).optional(),
+    bitrate: z.number().int().min(1).max(2000).optional(),
+    artwork: mediaUrl.optional(),
+    url: mediaUrl.optional(),
+    coverUrl: mediaUrl.optional(),
+    coverPublicId: z.string().max(500).optional(),
+    isFavorite: z.boolean().optional(),
+    playCount: z.number().int().min(0).max(10000000).optional(),
+    lastPlayedAt: nullableTimestamp,
+    dateAdded: nullableTimestamp,
     categories: z.array(id).max(30).default([]),
     tags: z.array(id).max(50).default([]),
   })

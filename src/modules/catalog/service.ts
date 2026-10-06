@@ -23,12 +23,16 @@ export async function songView(song: any) {
   delete value.sourceFileId;
   delete value.audioVersion;
   delete value.processingUpload;
-  const hasCover = Boolean(value.coverFileId);
+  const hasCover = Boolean(value.coverFileId || value.coverUrl);
   delete value.coverFileId;
   delete value.coverMime;
   return {
     ...value,
     qualities,
-    ...(hasCover ? { coverUrl: `/api/v1/media/covers/${value._id}` } : {}),
+    ...(hasCover
+      ? {
+          coverUrl: value.coverUrl || `/api/v1/media/covers/${value._id}`,
+        }
+      : {}),
   };
 }

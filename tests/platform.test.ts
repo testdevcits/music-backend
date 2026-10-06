@@ -82,12 +82,13 @@ before(
       JWT_SECRET: 'integration-test-secret-at-least-32-chars',
       QUEUE_PREFIX: 'music-platform-test',
     });
-    connections = await import('../src/infrastructure/connections');
+    const freshStamp = Date.now();
+    connections = await import(`../src/infrastructure/connections.ts?ts=${freshStamp}`);
     await Promise.all(Array.from({ length: 8 }, () => connections.connect()));
-    queues = await import('../src/infrastructure/queues');
-    const { app } = await import('../src/app');
+    queues = await import(`../src/infrastructure/queues.ts?ts=${freshStamp}`);
+    const { app } = await import(`../src/app.ts?ts=${freshStamp}`);
     for (const model of Object.values(mongoose.models)) await model.init();
-    const { processAudio } = await import('../src/workers/audio');
+    const { processAudio } = await import(`../src/workers/audio.ts?ts=${freshStamp}`);
     worker = new Worker('audio', processAudio, {
       connection: queues.queueConnection,
       prefix: 'music-platform-test',
@@ -135,6 +136,32 @@ async function mediaUpload(path: string, data: Buffer, kind: 'audio' | 'cover', 
   });
   return { status: response.status, data: await response.json() };
 }
+test('admin can manage categories and tags', async () => {
+  const { User } = await import('../src/modules/auth/models');
+  const register = await request('POST', '/auth/register', {
+    email: 'catalog-admin@example.com',
+    password: 'strong-password-123',
+    name: 'Catalog Admin',
+    role: 'admin',
+  });
+  assert.equal(register.status, 201);
+  await User.updateOne({ email: 'catalog-admin@example.com' }, { $set: { role: 'admin' } });
+  const token = (await request('POST', '/auth/login', {
+    email: 'catalog-admin@example.com',
+    password: 'strong-password-123',
+  })).data.accessToken;
+
+  const category = await request('POST', '/admin/categories', { name: 'Devotional', slug: 'devotional' }, token);
+  assert.equal(category.status, 201);
+  assert.equal((await request('PATCH', `/admin/categories/${category.data._id}`, { name: 'Bhakti', slug: 'bhakti' }, token)).status, 200);
+  assert.equal((await request('DELETE', `/admin/categories/${category.data._id}`, undefined, token)).status, 204);
+
+  const tag = await request('POST', '/admin/tags', { name: 'Peaceful', slug: 'peaceful' }, token);
+  assert.equal(tag.status, 201);
+  assert.equal((await request('PATCH', `/admin/tags/${tag.data._id}`, { name: 'Calm', slug: 'calm' }, token)).status, 200);
+  assert.equal((await request('DELETE', `/admin/tags/${tag.data._id}`, undefined, token)).status, 204);
+});
+
 test(
   'end-to-end authorization, rotation, media, quotas, ownership and revocation',
   async () => {
@@ -434,6 +461,34 @@ test(
   },
   { timeout: 30000 },
 );
+test('song metadata accepts detailed admin fields', async () => {
+  const { songInput } = await import('../src/modules/admin/validators');
+  const parsed = songInput.parse({
+    title: 'Death Bed',
+    artist: '507f1f77bcf86cd799439011',
+    album: '507f1f77bcf86cd799439012',
+    language: 'en',
+    duration: 173,
+    genre: 'Hip-Hop',
+    year: 2020,
+    trackNumber: 1,
+    discNumber: 1,
+    format: 'mp3',
+    bitrate: 320,
+    artwork: 'https://example.com/cover.jpg',
+    url: 'https://example.com/audio.mp3',
+    coverUrl: 'https://res.cloudinary.com/demo/image/upload/cover.jpg',
+    coverPublicId: 'demo/cover',
+    isFavorite: false,
+    playCount: 0,
+    lastPlayedAt: null,
+    dateAdded: Date.now(),
+  });
+  assert.equal(parsed.genre, 'Hip-Hop');
+  assert.equal(parsed.bitrate, 320);
+  assert.equal(parsed.artwork, 'https://example.com/cover.jpg');
+  assert.equal(parsed.format, 'mp3');
+});
 test('paused listening cannot inflate analytics', async () => {
   const { allowedListeningDelta } = await import('../src/modules/playback/service');
   assert.equal(allowedListeningDelta('pause', 60, 60), 0);

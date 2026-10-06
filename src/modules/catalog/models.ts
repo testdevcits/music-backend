@@ -48,8 +48,25 @@ const songSchema = new Schema(
     language: { type: String, required: true },
     duration: { type: Number, default: 0 },
     lyrics: String,
+    genre: String,
+    year: Number,
+    trackNumber: Number,
+    discNumber: Number,
+    format: String,
+    bitrate: Number,
+    artwork: String,
+    url: String,
+    coverUrl: String,
+    coverPublicId: String,
     coverFileId: String,
     coverMime: String,
+    provider: String,
+    externalSongId: String,
+    sourceLicense: String,
+    isFavorite: { type: Boolean, default: false },
+    playCount: { type: Number, default: 0 },
+    lastPlayedAt: Date,
+    dateAdded: Date,
     categories: [ref('Category')],
     tags: [ref('Tag')],
     published: { type: Boolean, default: false },
@@ -80,6 +97,7 @@ songSchema.index(
 songSchema.index({ published: 1, categories: 1, createdAt: -1 });
 songSchema.index({ artist: 1, album: 1 });
 songSchema.index({ tags: 1 });
+songSchema.index({ provider: 1, externalSongId: 1 }, { unique: true, sparse: true });
 export const Song = model('Song', songSchema);
 const licenseSchema = new Schema(
   {
