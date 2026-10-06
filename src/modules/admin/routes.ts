@@ -81,17 +81,23 @@ const resources: Record<string, { model: any; schema: z.AnyZodObject }> = {
 for (const [path, { model: Model, schema }] of Object.entries(resources)) {
   adminRoutes.get(`/${path}`, async (req, res) => {
     const q = page.parse(req.query);
+    const rows = await Model.find()
+      .sort({ createdAt: -1 })
+      .skip((q.page - 1) * q.limit)
+      .limit(q.limit)
+      .lean();
     res.json({
-      data: await Model.find()
-        .sort({ createdAt: -1 })
-        .skip((q.page - 1) * q.limit)
-        .limit(q.limit),
+      data: rows.map((row: any) => {
+        const { _id, ...fields } = row;
+        return { ...fields, mongoId: String(_id) };
+      }),
     });
   });
   adminRoutes.get(`/${path}/:id`, async (req, res) => {
-    const row = await Model.findById(id.parse(req.params.id));
+    const row = await Model.findById(id.parse(req.params.id)).lean();
     ensure(row, 404, 'NOT_FOUND');
-    res.json(row);
+    const { _id, ...fields } = row as any;
+    res.json({ ...fields, mongoId: String(_id) });
   });
   adminRoutes.post(`/${path}`, async (req, res) => {
     const input = schema.parse(req.body);
@@ -107,7 +113,8 @@ for (const [path, { model: Model, schema }] of Object.entries(resources)) {
         'INVALID_SONGS',
       );
     }
-    res.status(201).json(await Model.create(input));
+    const created = await Model.create(input);
+    res.status(201).json({ ...created.toJSON(), mongoId: String(created._id) });
   });
   adminRoutes.patch(`/${path}/:id`, async (req, res) => {
     const updateSchema =
