@@ -1,0 +1,75 @@
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import mongoose from 'mongoose';
+import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import { env } from '../../config/env';
+import { ApiError, ensure } from '../../shared/errors';
+import { RefreshSession, User } from './models';
+const hash = (token: string) => createHash('sha256').update(token).digest('hex');
+function access(user: string) {
+  return jwt.sign({}, env.JWT_SECRET, {
+    subject: user,
+    expiresIn: '15m',
+    issuer: env.JWT_ISSUER,
+    audience: env.JWT_AUDIENCE,
+    algorithm: 'HS256',
+  });
+}
+export async function issue(
+  user: string,
+  family: string = randomUUID(),
+  session?: mongoose.ClientSession,
+) {
+  const refreshToken = randomBytes(48).toString('base64url');
+  await RefreshSession.create(
+    [
+      {
+        user,
+        family,
+        tokenHash: hash(refreshToken),
+        expiresAt: new Date(Date.now() + 30 * 86400000),
+      },
+    ],
+    { session },
+  );
+  return { accessToken: access(user), refreshToken, expiresIn: 900 };
+}
+export async function register(input: { email: string; password: string; name: string }) {
+  const user = await User.create({
+    email: input.email,
+    name: input.name,
+    passwordHash: await bcrypt.hash(input.password, 12),
+  });
+  return issue(String(user._id));
+}
+const dummyHash = bcrypt.hashSync('dummy password never usable', 12);
+export async function login(input: { email: string; password: string }) {
+  const user = await User.findOne({ email: input.email }).select('+passwordHash');
+  const valid = await bcrypt.compare(input.password, user?.passwordHash ?? dummyHash);
+  ensure(user && valid && !user.disabled, 401, 'INVALID_CREDENTIALS');
+  return issue(String(user._id));
+}
+export async function rotate(token: string) {
+  const old = await RefreshSession.findOne({ tokenHash: hash(token) });
+  ensure(old && old.expiresAt > new Date(), 401, 'INVALID_REFRESH_TOKEN');
+  if (old.revokedAt) {
+    await RefreshSession.updateMany({ family: old.family }, { $set: { revokedAt: new Date() } });
+    throw new ApiError(401, 'REFRESH_REUSE_DETECTED');
+  }
+  const user = await User.findById(old.user);
+  ensure(user && !user.disabled, 401, 'INVALID_REFRESH_TOKEN');
+  return mongoose.connection.transaction(async (session) => {
+    const consumed = await RefreshSession.findOneAndUpdate(
+      { _id: old._id, revokedAt: null },
+      { $set: { revokedAt: new Date() } },
+      { session, new: true },
+    );
+    ensure(consumed, 401, 'INVALID_REFRESH_TOKEN');
+    return issue(String(old.user), old.family, session);
+  });
+}
+export async function logout(token: string) {
+  const old = await RefreshSession.findOne({ tokenHash: hash(token) });
+  if (old)
+    await RefreshSession.updateMany({ family: old.family }, { $set: { revokedAt: new Date() } });
+}

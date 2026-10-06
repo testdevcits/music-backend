@@ -1,0 +1,28 @@
+import { Router } from 'express';
+import * as controller from './controller';
+
+export const libraryRoutes = Router();
+libraryRoutes.get('/users/me', controller.getUsersMe);
+libraryRoutes.patch('/users/me', controller.patchUsersMe);
+libraryRoutes.get('/playlists', controller.getPlaylists);
+libraryRoutes.post('/playlists', controller.postPlaylists);
+libraryRoutes.get('/playlists/:id', controller.getPlaylistsId);
+libraryRoutes.patch('/playlists/:id', controller.patchPlaylistsId);
+libraryRoutes.delete('/playlists/:id', controller.deletePlaylistsId);
+libraryRoutes.put('/playlists/:id/songs/:songId', controller.putPlaylistsIdSongsSongId);
+libraryRoutes.delete('/playlists/:id/songs/:songId', controller.deletePlaylistsIdSongsSongId);
+libraryRoutes.get('/favorites', controller.getFavorites);
+libraryRoutes.put('/favorites/:songId', controller.putFavoritesSongId);
+libraryRoutes.delete('/favorites/:songId', controller.deleteFavoritesSongId);
+libraryRoutes.get('/history', controller.getHistory);
+libraryRoutes.delete('/history', controller.deleteHistory);
+libraryRoutes.post('/devices', controller.postDevices);
+libraryRoutes.get('/devices', controller.getDevices);
+libraryRoutes.delete('/devices/:id', controller.deleteDevicesId);
+libraryRoutes.post('/downloads', controller.postDownloads);
+libraryRoutes.get('/downloads', controller.getDownloads);
+libraryRoutes.post('/downloads/:id/url', controller.postDownloadsIdUrl);
+libraryRoutes.get('/downloads/:id/audio', controller.getDownloadsIdAudio);
+libraryRoutes.delete('/downloads/:id', controller.deleteDownloadsId);
+libraryRoutes.get('/notifications', controller.getNotifications);
+libraryRoutes.patch('/notifications/:id/read', controller.patchNotificationsIdRead);

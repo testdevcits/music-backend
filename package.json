@@ -1,0 +1,47 @@
+{
+  "name": "music-platform-backend",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "dev": "tsx watch src/standalone.ts",
+    "dev:worker": "tsx watch src/workers/main.ts",
+    "build": "tsc",
+    "start": "node dist/standalone.js",
+    "worker": "node dist/workers/main.js",
+    "test": "tsx --test tests/*.test.ts",
+    "check": "tsc --noEmit",
+    "seed": "tsx scripts/seed.ts",
+    "db:indexes": "tsx scripts/indexes.ts",
+    "format": "prettier --write src scripts tests docs package.json tsconfig.json README.md docker-compose.yml vercel.json docker-compose.worker.yml",
+    "format:check": "prettier --check src scripts tests docs package.json tsconfig.json README.md docker-compose.yml vercel.json docker-compose.worker.yml",
+    "vercel-build": "npm run build"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "bullmq": "^5.58.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.1.0",
+    "helmet": "^8.1.0",
+    "ioredis": "^5.7.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.18.0",
+    "pino": "^9.9.0",
+    "pino-http": "^10.5.0",
+    "rate-limit-redis": "^4.2.1",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^22.18.0",
+    "prettier": "^3.9.9",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2"
+  }
+}

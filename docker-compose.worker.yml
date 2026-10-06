@@ -1,0 +1,23 @@
+# Companion worker for a Vercel-hosted API. Uses remote MongoDB and Redis.
+services:
+  worker:
+    build: .
+    command: ['node', 'dist/workers/main.js']
+    init: true
+    restart: unless-stopped
+    env_file: .env.worker
+    environment:
+      NODE_ENV: production
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=2g,uid=1000,gid=1000,mode=1770
+    cap_drop: [ALL]
+    security_opt: ['no-new-privileges:true']
+    cpus: 2.0
+    mem_limit: 2g
+    stop_grace_period: 50m
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
