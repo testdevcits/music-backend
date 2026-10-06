@@ -6,15 +6,19 @@ import { pipeline } from 'node:stream/promises';
 import mongoose from 'mongoose';
 import { ensure } from '../shared/errors';
 
-function bucket() {
+function bucket(bucketName = 'media') {
   ensure(mongoose.connection.db, 503, 'DATABASE_UNAVAILABLE');
-  return new mongoose.mongo.GridFSBucket(mongoose.connection.db, { bucketName: 'media' });
+  return new mongoose.mongo.GridFSBucket(mongoose.connection.db, { bucketName });
+}
+
+export async function saveBufferToBucket(data: Buffer, filename: string, contentType: string, bucketName = 'media') {
+  const upload = bucket(bucketName).openUploadStream(filename, { contentType });
+  await pipeline(Readable.from(data), upload);
+  return String(upload.id);
 }
 
 export async function saveBuffer(data: Buffer, filename: string, contentType: string) {
-  const upload = bucket().openUploadStream(filename, { contentType });
-  await pipeline(Readable.from(data), upload);
-  return String(upload.id);
+  return saveBufferToBucket(data, filename, contentType, 'media');
 }
 
 export async function saveFile(path: string, filename: string, contentType: string) {
@@ -38,8 +42,8 @@ export async function downloadToPath(fileId: string, path: string, maxBytes: num
   );
 }
 
-export function streamFile(fileId: string, contentType: string, res: Response) {
-  const source = bucket().openDownloadStream(new mongoose.Types.ObjectId(fileId));
+export function streamBucketFile(bucketName: string, fileId: string, contentType: string, res: Response) {
+  const source = bucket(bucketName).openDownloadStream(new mongoose.Types.ObjectId(fileId));
   res.set({
     'Content-Type': contentType,
     'Cache-Control': 'private, no-store',
@@ -50,4 +54,8 @@ export function streamFile(fileId: string, contentType: string, res: Response) {
     else res.destroy();
   });
   source.pipe(res);
+}
+
+export function streamFile(fileId: string, contentType: string, res: Response) {
+  streamBucketFile('media', fileId, contentType, res);
 }

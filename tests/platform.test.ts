@@ -181,6 +181,30 @@ test('profile endpoint includes image and persists it', async () => {
   assert.equal(me.data.image, 'https://cdn.example.com/avatar.png');
 });
 
+test('profile avatar upload is saved to a dedicated profiles bucket', async () => {
+  const register = await request('POST', '/auth/register', {
+    email: 'profile-avatar@example.com',
+    password: 'strong-password-123',
+    name: 'Avatar User',
+    role: 'admin',
+  });
+  assert.equal(register.status, 201);
+  const token = register.data.accessToken;
+  const image = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAF', 'base64');
+  const upload = await fetch(`http://127.0.0.1:${port}/api/v1/users/me/avatar`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'image/png' },
+    body: image,
+  });
+  assert.equal(upload.status, 201);
+  const payload = await upload.json();
+  assert.match(payload.image, /^\/api\/v1\/users\/me\/avatar\//);
+
+  const me = await request('GET', '/users/me', undefined, token);
+  assert.equal(me.status, 200);
+  assert.match(me.data.image, /^\/api\/v1\/users\/me\/avatar\//);
+});
+
 test(
   'end-to-end authorization, rotation, media, quotas, ownership and revocation',
   async () => {

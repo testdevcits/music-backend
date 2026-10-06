@@ -3,6 +3,8 @@ import * as controller from './controller';
 
 export const libraryRoutes = Router();
 libraryRoutes.get('/users/me', controller.getUsersMe);
+libraryRoutes.post('/users/me/avatar', controller.postUsersMeAvatar);
+libraryRoutes.get('/users/me/avatar/:id', controller.getUsersMeAvatarId);
 libraryRoutes.patch('/users/me', controller.patchUsersMe);
 libraryRoutes.get('/playlists', controller.getPlaylists);
 libraryRoutes.post('/playlists', controller.postPlaylists);

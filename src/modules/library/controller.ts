@@ -1,7 +1,8 @@
+import mongoose from 'mongoose';
 import { RequestHandler } from 'express';
 import { z } from 'zod';
 import { ensure } from '../../shared/errors';
-import { streamFile } from '../../infrastructure/media';
+import { saveBufferToBucket, streamBucketFile, streamFile } from '../../infrastructure/media';
 import { id, name, page, quality } from '../../shared/validation';
 import { User } from '../auth/models';
 import { Song } from '../catalog/models';
@@ -10,6 +11,40 @@ import { Device, Download, Favorite, Notification, Playlist } from './models';
 import * as service from './service';
 export const getUsersMe: RequestHandler = async (req, res) =>
   res.json(await User.findById(req.auth.userId).select('name email role createdAt image'));
+export const postUsersMeAvatar: RequestHandler = async (req, res) => {
+  const contentType = String(req.headers['content-type'] || 'image/png');
+  ensure(/^image\//.test(contentType), 400, 'UNSUPPORTED_CONTENT_TYPE');
+  const imageData = Buffer.isBuffer(req.body) ? req.body : Buffer.from(req.body ?? []);
+  ensure(imageData.length > 0, 400, 'EMPTY_IMAGE');
+  const fileId = await saveBufferToBucket(
+    imageData,
+    `profile-${req.auth.userId}-${Date.now()}.png`,
+    contentType,
+    'profiles',
+  );
+  const image = `/api/v1/users/me/avatar/${fileId}`;
+  const user = await User.findByIdAndUpdate(req.auth.userId, { $set: { image } }, { new: true }).select(
+    'name email role image createdAt',
+  );
+  res.status(201).json(user);
+};
+export const getUsersMeAvatarId: RequestHandler = async (req, res) => {
+  const fileId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const user = await User.findById(req.auth.userId).select('image');
+  const currentImage = user?.image ? String(user.image) : '';
+  const expectedPath = `/api/v1/users/me/avatar/${fileId}`;
+  if (!currentImage || currentImage !== expectedPath) {
+    return res.status(403).json({ error: { code: 'FORBIDDEN' } });
+  }
+  if (!mongoose.connection.db) {
+    return res.status(503).json({ error: { code: 'DATABASE_UNAVAILABLE' } });
+  }
+  const file = await mongoose.connection.db.collection('profiles.files').findOne({
+    _id: new mongoose.Types.ObjectId(fileId),
+  });
+  if (!file) return res.status(404).json({ error: { code: 'MEDIA_NOT_FOUND' } });
+  streamBucketFile('profiles', fileId, String(file.contentType || 'image/jpeg'), res);
+};
 export const patchUsersMe: RequestHandler = async (req, res) => {
   const input = z
     .object({

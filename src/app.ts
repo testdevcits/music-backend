@@ -35,6 +35,7 @@ app.use(
   '/api/v1/admin/songs/:id/uploads',
   express.raw({ type: ['audio/*', 'image/*'], limit: env.MAX_UPLOAD_BYTES }),
 );
+app.use('/api/v1/users/me/avatar', express.raw({ type: ['image/*'], limit: '10mb' }));
 app.use(express.json({ limit: '128kb' }));
 app.get('/', (_req, res) =>
   res.json({

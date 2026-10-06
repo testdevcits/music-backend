@@ -13,5 +13,8 @@ export const credentials = z
       .refine((v) => Buffer.byteLength(v) <= 72, 'Password exceeds 72 bytes'),
   })
   .strict();
-export const registration = credentials.extend({ name: z.string().trim().min(1).max(100) });
+export const registration = credentials.extend({
+  name: z.string().trim().min(1).max(100),
+  role: z.enum(['user', 'admin']).optional().default('user'),
+});
 export const refreshInput = z.object({ refreshToken: z.string().min(40).max(200) }).strict();

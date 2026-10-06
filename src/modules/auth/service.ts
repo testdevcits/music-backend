@@ -34,10 +34,11 @@ export async function issue(
   );
   return { accessToken: access(user), refreshToken, expiresIn: 900 };
 }
-export async function register(input: { email: string; password: string; name: string }) {
+export async function register(input: { email: string; password: string; name: string; role?: 'user' | 'admin' }) {
   const user = await User.create({
     email: input.email,
     name: input.name,
+    role: input.role ?? 'user',
     passwordHash: await bcrypt.hash(input.password, 12),
   });
   return issue(String(user._id));
