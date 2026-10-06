@@ -90,6 +90,21 @@ export const postSongsIdUploads: RequestHandler = async (req, res) => {
       await service.createUpload(id.parse(req.params.id), { kind, contentType, data: req.body }),
     );
 };
+
+export const postArtistsIdImage: RequestHandler = async (req, res) => {
+  ensure(Buffer.isBuffer(req.body) && req.body.length > 0, 400, 'UPLOAD_BODY_REQUIRED');
+  res.status(202).json(await service.uploadArtistImage(id.parse(req.params.id), req.body));
+};
+
+export const postAlbumsIdImage: RequestHandler = async (req, res) => {
+  ensure(Buffer.isBuffer(req.body) && req.body.length > 0, 400, 'UPLOAD_BODY_REQUIRED');
+  res.status(202).json(await service.uploadAlbumImage(id.parse(req.params.id), req.body));
+};
+
+export const postCategoriesIdImage: RequestHandler = async (req, res) => {
+  ensure(Buffer.isBuffer(req.body) && req.body.length > 0, 400, 'UPLOAD_BODY_REQUIRED');
+  res.status(202).json(await service.uploadCategoryImage(id.parse(req.params.id), req.body));
+};
 export const postUploadsIdComplete: RequestHandler = async (req, res) =>
   res.status(202).json(await service.completeUpload(id.parse(req.params.id)));
 export const getJobsId: RequestHandler = async (req, res) => {

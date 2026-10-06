@@ -67,3 +67,15 @@ export async function uploadProfileImageToCloudinary(data: Buffer, userId: strin
 export async function uploadBrandLogoToCloudinary(data: Buffer, brandId: string) {
   return uploadToCloudinary(data, 'music-platform/logos', `brand-${brandId}`, 'Brand logo');
 }
+
+export async function uploadArtistImageToCloudinary(data: Buffer, artistId: string) {
+  return uploadToCloudinary(data, 'music-platform/artists', `artist-${artistId}`, 'Artist image');
+}
+
+export async function uploadAlbumCoverToCloudinary(data: Buffer, albumId: string) {
+  return uploadToCloudinary(data, 'music-platform/albums', `album-${albumId}`, 'Album cover');
+}
+
+export async function uploadCategoryIconToCloudinary(data: Buffer, categoryId: string) {
+  return uploadToCloudinary(data, 'music-platform/categories', `category-${categoryId}`, 'Category icon');
+}

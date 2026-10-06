@@ -1,5 +1,5 @@
 import { env } from '../../config/env';
-import { uploadCoverToCloudinary } from '../../infrastructure/cloudinary';
+import { uploadCoverToCloudinary, uploadArtistImageToCloudinary, uploadAlbumCoverToCloudinary, uploadCategoryIconToCloudinary } from '../../infrastructure/cloudinary';
 import { saveBuffer } from '../../infrastructure/media';
 import { isQueuesEnabled, requireAudioQueue } from '../../infrastructure/queues';
 import { ensure } from '../../shared/errors';
@@ -292,4 +292,49 @@ export async function completeUpload(uploadId: string) {
   await requireAudioQueue().add('process', { uploadId: String(upload._id) }, { jobId: String(upload._id) });
   await Upload.updateOne({ _id: upload._id }, { $set: { completed: true } });
   return { status: 'queued', jobId: String(upload._id) };
+}
+
+export async function uploadArtistImage(artistId: string, data: Buffer) {
+  ensure(await Artist.exists({ _id: artistId }), 404, 'NOT_FOUND');
+  const cloudinaryUpload = await uploadArtistImageToCloudinary(data, artistId);
+  if (cloudinaryUpload) {
+    await Artist.findByIdAndUpdate(artistId, {
+      $set: {
+        imageUrl: cloudinaryUpload.url,
+        imagePublicId: cloudinaryUpload.publicId,
+      },
+    });
+    return { status: 'completed', url: cloudinaryUpload.url };
+  }
+  throw new Error('UPLOAD_FAILED');
+}
+
+export async function uploadAlbumImage(albumId: string, data: Buffer) {
+  ensure(await Album.exists({ _id: albumId }), 404, 'NOT_FOUND');
+  const cloudinaryUpload = await uploadAlbumCoverToCloudinary(data, albumId);
+  if (cloudinaryUpload) {
+    await Album.findByIdAndUpdate(albumId, {
+      $set: {
+        coverUrl: cloudinaryUpload.url,
+        coverPublicId: cloudinaryUpload.publicId,
+      },
+    });
+    return { status: 'completed', url: cloudinaryUpload.url };
+  }
+  throw new Error('UPLOAD_FAILED');
+}
+
+export async function uploadCategoryImage(categoryId: string, data: Buffer) {
+  ensure(await Category.exists({ _id: categoryId }), 404, 'NOT_FOUND');
+  const cloudinaryUpload = await uploadCategoryIconToCloudinary(data, categoryId);
+  if (cloudinaryUpload) {
+    await Category.findByIdAndUpdate(categoryId, {
+      $set: {
+        imageUrl: cloudinaryUpload.url,
+        imagePublicId: cloudinaryUpload.publicId,
+      },
+    });
+    return { status: 'completed', url: cloudinaryUpload.url };
+  }
+  throw new Error('UPLOAD_FAILED');
 }

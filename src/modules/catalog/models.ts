@@ -7,7 +7,7 @@ export const Artist = model(
   'Artist',
   withSecureId(
     new Schema(
-      { name: { type: String, required: true, index: true }, bio: String, imageFileId: String },
+      { name: { type: String, required: true, index: true }, bio: String, imageFileId: String, imageUrl: String, imagePublicId: String },
       { timestamps: true },
     ),
   ),
@@ -21,6 +21,8 @@ export const Album = model(
         title: { type: String, required: true },
         artist: { ...ref('Artist'), required: true },
         coverFileId: String,
+        coverUrl: String,
+        coverPublicId: String,
         releaseDate: Date,
       },
       { timestamps: true },
@@ -36,6 +38,8 @@ export const Category = model(
         name: { type: String, required: true },
         slug: { type: String, required: true, unique: true },
         parent: { ...ref('Category'), default: null },
+        imageUrl: String,
+        imagePublicId: String,
       },
       { timestamps: true },
     ),

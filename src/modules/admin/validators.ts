@@ -4,13 +4,32 @@ const slug = z
   .string()
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
   .max(100);
-export const artistInput = z.object({ name, bio: z.string().max(10000).optional() }).strict();
-export const albumInput = z
-  .object({ title: name, artist: id, releaseDate: z.coerce.date().optional() })
-  .strict();
-export const categoryInput = z.object({ name, slug, parent: id.nullable().default(null) }).strict();
-export const tagInput = z.object({ name, slug }).strict();
 const mediaUrl = z.string().url().max(2000);
+
+export const artistInput = z.object({
+  name,
+  bio: z.string().max(10000).optional(),
+  imageUrl: mediaUrl.optional(),
+  imagePublicId: z.string().max(500).optional(),
+}).strict();
+
+export const albumInput = z.object({
+  title: name,
+  artist: id,
+  releaseDate: z.coerce.date().optional(),
+  coverUrl: mediaUrl.optional(),
+  coverPublicId: z.string().max(500).optional(),
+}).strict();
+
+export const categoryInput = z.object({
+  name,
+  slug,
+  parent: id.nullable().default(null),
+  imageUrl: mediaUrl.optional(),
+  imagePublicId: z.string().max(500).optional(),
+}).strict();
+
+export const tagInput = z.object({ name, slug }).strict();
 const nullableTimestamp = z
   .union([z.number().int().min(0), z.string().datetime(), z.coerce.date()])
   .nullable()

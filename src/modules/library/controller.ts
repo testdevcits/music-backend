@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import { RequestHandler } from 'express';
 import { z } from 'zod';
 import { ensure } from '../../shared/errors';
-import { saveBufferToBucket, streamBucketFile, streamFile } from '../../infrastructure/media';
+import { streamBucketFile, streamFile } from '../../infrastructure/media';
 import { id, name, page, quality } from '../../shared/validation';
 import { User } from '../auth/models';
 import { Song } from '../catalog/models';
@@ -50,45 +50,30 @@ export const postUsersMeAvatar: RequestHandler = async (req, res) => {
   ensure(/^image\//.test(contentType), 400, 'UNSUPPORTED_CONTENT_TYPE');
   const imageData = Buffer.isBuffer(req.body) ? req.body : Buffer.from(req.body ?? []);
   ensure(imageData.length > 0, 400, 'EMPTY_IMAGE');
-
-  if (hasCloudinaryConfig()) {
-    try {
-      const cloudinaryUpload = await uploadProfileImageToCloudinary(imageData, req.auth.userId);
-      ensure(cloudinaryUpload, 500, 'CLOUDINARY_CONFIG_INVALID');
-      const user = await User.findByIdAndUpdate(
-        req.auth.userId,
-        {
-          $set: {
-            image: {
-              url: cloudinaryUpload.url,
-              alt: cloudinaryUpload.alt || 'Profile image',
-              publicId: cloudinaryUpload.publicId,
-            },
+  ensure(hasCloudinaryConfig(), 503, 'CLOUDINARY_CONFIG_MISSING');
+  try {
+    const cloudinaryUpload = await uploadProfileImageToCloudinary(imageData, req.auth.userId);
+    const user = await User.findByIdAndUpdate(
+      req.auth.userId,
+      {
+        $set: {
+          image: {
+            url: cloudinaryUpload.url,
+            alt: cloudinaryUpload.alt || 'Profile image',
+            publicId: cloudinaryUpload.publicId,
           },
         },
-        { new: true },
-      ).select('name email role image createdAt');
-      return res.status(201).json(serializeUser(user));
-    } catch (error) {
-      const message = String((error as Error)?.message || '');
-      if (message.includes('Invalid image file') || message.includes('CLOUDINARY_UPLOAD_FAILED')) {
-        throw new Error('INVALID_IMAGE');
-      }
-      throw error;
+      },
+      { new: true },
+    ).select('name email role image createdAt');
+    return res.status(201).json(serializeUser(user));
+  } catch (error) {
+    const message = String((error as Error)?.message || '');
+    if (message.includes('Invalid image file') || message.includes('CLOUDINARY_UPLOAD_FAILED')) {
+      throw new Error('INVALID_IMAGE');
     }
+    throw error;
   }
-
-  const fileId = await saveBufferToBucket(
-    imageData,
-    `profile-${req.auth.userId}-${Date.now()}.png`,
-    contentType,
-    'profiles',
-  );
-  const image = { url: `/api/v1/users/me/avatar/${fileId}`, alt: 'Profile image' };
-  const user = await User.findByIdAndUpdate(req.auth.userId, { $set: { image } }, { new: true }).select(
-    'name email role image createdAt',
-  );
-  res.status(201).json(serializeUser(user));
 };
 export const getUsersMeAvatarId: RequestHandler = async (req, res) => {
   const fileId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
