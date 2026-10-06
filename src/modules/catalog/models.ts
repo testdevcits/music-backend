@@ -103,6 +103,8 @@ const songSchema = withSecureId(
           _id: false,
           quality: { type: String, enum: ['64', '128', '192'] },
           fileId: String,
+          url: String,
+          publicId: String,
           bytes: Number,
           mime: String,
         },

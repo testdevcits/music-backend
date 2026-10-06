@@ -15,17 +15,17 @@ type CloudinaryUploadResult = {
   alt?: string;
 };
 
-async function uploadToCloudinary(data: Buffer, folder: string, publicId: string, alt?: string): Promise<CloudinaryUploadResult> {
+function configureCloudinary() {
   const cloudName = env.CLOUDINARY_CLOUD_NAME;
   const apiKey = env.CLOUDINARY_API_KEY;
   const apiSecret = env.CLOUDINARY_API_SECRET;
   if (!cloudName || !apiKey || !apiSecret) throw new Error('CLOUDINARY_CONFIG_INVALID');
+  cloudinary.config({ cloud_name: cloudName, api_key: apiKey, api_secret: apiSecret });
+  return { cloudName, apiKey, apiSecret };
+}
 
-  cloudinary.config({
-    cloud_name: cloudName,
-    api_key: apiKey,
-    api_secret: apiSecret,
-  });
+async function uploadToCloudinary(data: Buffer, folder: string, publicId: string, alt?: string): Promise<CloudinaryUploadResult> {
+  configureCloudinary();
 
   return await new Promise<CloudinaryUploadResult>((resolve, reject) => {
     const upload = cloudinary.uploader.upload_stream(
@@ -58,6 +58,27 @@ async function uploadToCloudinary(data: Buffer, folder: string, publicId: string
 
 export async function uploadCoverToCloudinary(data: Buffer, songId: string) {
   return uploadToCloudinary(data, 'music-platform/covers', `song-${songId}`, 'Song cover');
+}
+
+export function createCloudinaryAudioUploadSignature(songId: string) {
+  const { cloudName, apiKey, apiSecret } = configureCloudinary();
+  const timestamp = Math.floor(Date.now() / 1000);
+  const folder = 'music-platform/audio';
+  const publicId = `song-${songId}`;
+  const overwrite = 'true';
+  const signature = cloudinary.utils.api_sign_request({ folder, public_id: publicId, overwrite, timestamp }, apiSecret);
+  return { cloudName, apiKey, timestamp, signature, folder, publicId, overwrite };
+}
+
+export function cloudinaryAudioUrls(songId: string) {
+  const { cloudName } = configureCloudinary();
+  const publicId = `music-platform/audio/song-${songId}`;
+  return ['64', '128', '192'].map((quality) => ({
+    quality,
+    url: `https://res.cloudinary.com/${cloudName}/video/upload/br_${quality}k/${publicId}.mp3`,
+    publicId,
+    mime: 'audio/mpeg',
+  }));
 }
 
 export async function uploadProfileImageToCloudinary(data: Buffer, userId: string) {
