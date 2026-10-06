@@ -81,6 +81,12 @@ export function cloudinaryAudioUrls(songId: string) {
   }));
 }
 
+export function cloudinaryAudioUrl(publicId: string) {
+  const { cloudName } = configureCloudinary();
+  const encodedPublicId = publicId.split('/').map(encodeURIComponent).join('/');
+  return `https://res.cloudinary.com/${cloudName}/video/upload/${encodedPublicId}.mp3`;
+}
+
 export async function uploadProfileImageToCloudinary(data: Buffer, userId: string) {
   return uploadToCloudinary(data, 'music-platform/profiles', `user-${userId}`, 'Profile image');
 }

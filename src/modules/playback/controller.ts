@@ -25,5 +25,9 @@ export const postStreamingSessionsIdEvents: RequestHandler = async (req, res) =>
 };
 export const getStreamingSessionsIdAudio: RequestHandler = async (req, res) => {
   const media = await streamingFile(req.auth.userId, id.parse(req.params.id));
+  if (media.url) {
+    res.redirect(302, media.url);
+    return;
+  }
   streamFile(media.fileId, media.mime, res);
 };

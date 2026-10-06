@@ -18,7 +18,9 @@ export async function availableSong(songId: string, offline = false) {
 }
 export async function songView(song: any) {
   const value = typeof song.toObject === 'function' ? song.toObject() : { ...song };
-  const qualities = (value.audio ?? []).map((a: any) => a.quality);
+  const audio = value.audio ?? [];
+  const qualities = audio.map((a: any) => a.quality);
+  const audioUrl = audio.find((a: any) => a.url)?.url;
   delete value.audio;
   delete value.sourceFileId;
   delete value.audioVersion;
@@ -29,6 +31,7 @@ export async function songView(song: any) {
   return {
     ...value,
     qualities,
+    ...(audioUrl ? { audioUrl } : {}),
     ...(hasCover
       ? {
           coverUrl: value.coverUrl || `/api/v1/media/covers/${value._id}`,

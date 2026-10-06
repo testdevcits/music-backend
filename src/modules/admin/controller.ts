@@ -10,7 +10,7 @@ import { lockUser } from '../billing/service';
 import { License, Song } from '../catalog/models';
 import { Device, Download, Playlist } from '../library/models';
 import { ListeningEvent } from '../playback/models';
-import { cloudinaryAudioUrls, createCloudinaryAudioUploadSignature, hasCloudinaryConfig } from '../../infrastructure/cloudinary';
+import { cloudinaryAudioUrl, createCloudinaryAudioUploadSignature, hasCloudinaryConfig } from '../../infrastructure/cloudinary';
 import * as service from './service';
 import * as validators from './validators';
 export const deletePlaylistsId: RequestHandler = async (req, res) => {
@@ -67,7 +67,7 @@ export const postSongsIdPublish: RequestHandler = async (req, res) => {
   const { published } = z.object({ published: z.boolean() }).strict().parse(req.body);
   if (published) {
     const song: any = await Song.findById(songId);
-    ensure(song?.processing === 'ready' && (song.audio ?? []).length === 3, 409, 'AUDIO_NOT_READY');
+    ensure(song?.processing === 'ready' && (song.audio ?? []).length > 0, 409, 'AUDIO_NOT_READY');
     const license = await License.findOne({
       song: songId,
       enabled: true,
@@ -95,19 +95,28 @@ export const postSongsIdUploads: RequestHandler = async (req, res) => {
 export const getSongsIdCloudinarySignature: RequestHandler = async (req, res) => {
   const songId = id.parse(req.params.id);
   ensure(hasCloudinaryConfig(), 503, 'CLOUDINARY_CONFIG_MISSING');
-  ensure(await Song.exists({ _id: songId }), 404, 'NOT_FOUND');
+  const song: any = await Song.findById(songId);
+  ensure(song, 404, 'NOT_FOUND');
+  const input = z.object({ bytes: z.coerce.number().int().positive().max(200 * 1024 * 1024) }).parse(req.query);
+  ensure(input.bytes <= 200 * 1024 * 1024, 413, 'UPLOAD_TOO_LARGE');
   res.json(createCloudinaryAudioUploadSignature(songId));
 };
 
 export const postSongsIdCloudinaryComplete: RequestHandler = async (req, res) => {
   const songId = id.parse(req.params.id);
   ensure(hasCloudinaryConfig(), 503, 'CLOUDINARY_CONFIG_MISSING');
-  const input = z.object({ publicId: z.string().min(1).max(300) }).strict().parse(req.body);
+  const input = z.object({ publicId: z.string().min(1).max(300), bytes: z.number().int().positive().max(200 * 1024 * 1024) }).strict().parse(req.body);
   const song = await Song.findById(songId);
   ensure(song, 404, 'NOT_FOUND');
   const expectedPublicId = `music-platform/audio/song-${songId}`;
   ensure(input.publicId === expectedPublicId, 400, 'INVALID_CLOUDINARY_PUBLIC_ID');
-  const audio = cloudinaryAudioUrls(songId);
+  const audio = [{
+    quality: '192',
+    url: cloudinaryAudioUrl(input.publicId),
+    publicId: input.publicId,
+    bytes: input.bytes,
+    mime: 'audio/mpeg',
+  }];
   song.audio = audio as typeof song.audio;
   song.processing = 'ready';
   await song.save();
