@@ -13,6 +13,8 @@ Deploy the `backend/` directory as the Vercel project root. `vercel.json` config
 
 The API function is configured for 60 seconds; normal API calls should complete in a few seconds because FFmpeg work is asynchronous. Vercel Functions have request-size and duration limits. Because MongoDB-only uploads pass through the API into GridFS, use a separate container API endpoint for large music uploads if the Vercel request limit is lower than `MAX_UPLOAD_BYTES`; keep the same MongoDB and Redis configuration. Use the official [Express deployment guide](https://vercel.com/docs/frameworks/backend/express) and [function limits](https://vercel.com/docs/functions/limitations) when selecting a plan.
 
+If an API request returns `DEPENDENCY_UNAVAILABLE`, request `/health/ready` and inspect the associated Vercel Runtime Log. The API requires both a reachable MongoDB Atlas cluster and a reachable TCP Redis endpoint. `redis://localhost:6379` refers to the Vercel Function itself and will fail; use your provider's `rediss://` connection string. Atlas must permit the Vercel deployment's network access.
+
 1. Provision MongoDB with a replica set, authentication, TLS, backups and restore drills. Standalone MongoDB cannot run the required quota/token transactions.
 2. Provision private Redis with TLS/authentication and AOF persistence. BullMQ requires `maxmemory-policy noeviction`; do not use an eviction-prone shared cache. Configure queue persistence/HA according to your job-loss tolerance.
 3. Give the application database identity read/write access only to its MongoDB database. Include GridFS `media.files` and `media.chunks` in backup and restore drills; this database contains the original, processed audio and covers.

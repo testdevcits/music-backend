@@ -45,13 +45,14 @@ app.get('/', (_req, res) =>
   }),
 );
 app.get('/health/live', (_req, res) => res.json({ status: 'ok' }));
-app.get('/health/ready', async (_req, res) => {
+app.get('/health/ready', async (req, res) => {
   try {
     await connect();
     if (mongoose.connection.readyState !== 1) throw Error();
     await redis.ping();
     res.json({ status: 'ready' });
-  } catch {
+  } catch (err) {
+    logger.warn({ err, requestId: req.id }, 'Readiness check failed');
     res.status(503).json({ status: 'unavailable' });
   }
 });
