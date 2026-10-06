@@ -10,8 +10,41 @@ import { ListeningEvent } from '../playback/models';
 import { Device, Download, Favorite, Notification, Playlist } from './models';
 import * as service from './service';
 import { hasCloudinaryConfig, uploadProfileImageToCloudinary } from '../../infrastructure/cloudinary';
-export const getUsersMe: RequestHandler = async (req, res) =>
-  res.json(await User.findById(req.auth.userId).select('name email role createdAt image'));
+
+function normalizeUserImage(value: unknown) {
+  if (!value) return null;
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed ? { url: trimmed, alt: 'Profile image' } : null;
+  }
+  if (typeof value === 'object' && 'url' in value && typeof (value as { url?: unknown }).url === 'string') {
+    return {
+      url: String((value as { url?: unknown }).url),
+      alt: typeof (value as { alt?: unknown }).alt === 'string' ? String((value as { alt?: unknown }).alt) : 'Profile image',
+      publicId:
+        typeof (value as { publicId?: unknown }).publicId === 'string'
+          ? String((value as { publicId?: unknown }).publicId)
+          : undefined,
+    };
+  }
+  return null;
+}
+
+function serializeUser(user: any) {
+  return {
+    id: String(user?._id ?? user?.id ?? ''),
+    email: user?.email,
+    createdAt: user?.createdAt,
+    name: user?.name,
+    role: user?.role,
+    image: normalizeUserImage(user?.image),
+  };
+}
+
+export const getUsersMe: RequestHandler = async (req, res) => {
+  const user = await User.findById(req.auth.userId).select('name email role createdAt image');
+  res.json(serializeUser(user));
+};
 export const postUsersMeAvatar: RequestHandler = async (req, res) => {
   const contentType = String(req.headers['content-type'] || 'image/png');
   ensure(/^image\//.test(contentType), 400, 'UNSUPPORTED_CONTENT_TYPE');
@@ -35,7 +68,7 @@ export const postUsersMeAvatar: RequestHandler = async (req, res) => {
         },
         { new: true },
       ).select('name email role image createdAt');
-      return res.status(201).json(user);
+      return res.status(201).json(serializeUser(user));
     } catch (error) {
       const message = String((error as Error)?.message || '');
       if (message.includes('Invalid image file') || message.includes('CLOUDINARY_UPLOAD_FAILED')) {
@@ -55,7 +88,7 @@ export const postUsersMeAvatar: RequestHandler = async (req, res) => {
   const user = await User.findByIdAndUpdate(req.auth.userId, { $set: { image } }, { new: true }).select(
     'name email role image createdAt',
   );
-  res.status(201).json(user);
+  res.status(201).json(serializeUser(user));
 };
 export const getUsersMeAvatarId: RequestHandler = async (req, res) => {
   const fileId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
@@ -97,11 +130,10 @@ export const patchUsersMe: RequestHandler = async (req, res) => {
     })
     .strict()
     .parse(req.body);
-  res.json(
-    await User.findByIdAndUpdate(req.auth.userId, { $set: input }, { new: true }).select(
-      'name email role image createdAt',
-    ),
+  const user = await User.findByIdAndUpdate(req.auth.userId, { $set: input }, { new: true }).select(
+    'name email role image createdAt',
   );
+  res.json(serializeUser(user));
 };
 export const getPlaylists: RequestHandler = async (req, res) => {
   const q = page.parse(req.query);
