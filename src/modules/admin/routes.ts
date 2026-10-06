@@ -43,6 +43,7 @@ for (const [path, { model: Model, schema }] of Object.entries(resources)) {
   });
   adminRoutes.post(`/${path}`, async (req, res) => {
     const input = schema.parse(req.body);
+    if (path === 'artists') await service.ensureUniqueArtistName(input.name);
     await service.validateReferences(input);
     if (path === 'categories' && input.parent)
       ensure(await Category.exists({ _id: input.parent }), 400, 'INVALID_PARENT');
@@ -60,6 +61,9 @@ for (const [path, { model: Model, schema }] of Object.entries(resources)) {
     const updateSchema =
       path === 'categories' ? schema.omit({ parent: true }).partial() : schema.partial();
     const input = updateSchema.parse(req.body);
+    const resourceId = id.parse(req.params.id);
+    if (path === 'artists' && input.name)
+      await service.ensureUniqueArtistName(input.name, resourceId);
     if (
       path === 'plans' &&
       Object.keys(input).some((key) =>
@@ -68,7 +72,7 @@ for (const [path, { model: Model, schema }] of Object.entries(resources)) {
     )
       ensure(
         !(await Subscription.exists({
-          plan: id.parse(req.params.id),
+          plan: resourceId,
           status: 'active',
           endsAt: { $gt: new Date() },
         })),
@@ -86,7 +90,7 @@ for (const [path, { model: Model, schema }] of Object.entries(resources)) {
         );
     }
     const row = await Model.findByIdAndUpdate(
-      id.parse(req.params.id),
+      resourceId,
       { $set: input },
       { new: true, runValidators: true },
     );
@@ -94,6 +98,17 @@ for (const [path, { model: Model, schema }] of Object.entries(resources)) {
     res.json(row);
   });
 }
+adminRoutes.delete('/artists/:id', async (req, res) => {
+  const artistId = id.parse(req.params.id);
+  ensure(
+    !(await Song.exists({ artist: artistId })) && !(await Album.exists({ artist: artistId })),
+    409,
+    'ARTIST_IN_USE',
+  );
+  const artist = await Artist.findByIdAndDelete(artistId);
+  ensure(artist, 404, 'NOT_FOUND');
+  res.status(204).send();
+});
 adminRoutes.delete('/playlists/:id', controller.deletePlaylistsId);
 adminRoutes.get('/users', controller.getUsers);
 adminRoutes.patch('/users/:id', controller.patchUsersId);

@@ -176,8 +176,35 @@ test(
     assert.equal(logged.status, 200);
     token = logged.data.accessToken;
     await User.updateOne({ _id: user._id }, { $set: { role: 'admin' } });
+    const removableArtist = await request(
+      'POST',
+      '/admin/artists',
+      { name: 'Removable Artist' },
+      token,
+    );
+    assert.equal(removableArtist.status, 201);
+    assert.equal(
+      (
+        await request(
+          'POST',
+          '/admin/artists',
+          { name: 'removable artist' },
+          token,
+        )
+      ).status,
+      409,
+    );
+    assert.equal(
+      (await request('DELETE', `/admin/artists/${removableArtist.data._id}`, undefined, token))
+        .status,
+      204,
+    );
     const artist = await Artist.create({ name: 'Test Artist' });
     const song = await Song.create({ title: 'Test Song', artist: artist._id, language: 'hi' });
+    assert.equal(
+      (await request('DELETE', `/admin/artists/${artist._id}`, undefined, token)).status,
+      409,
+    );
     assert.equal(
       (await request('POST', `/admin/songs/${song._id}/publish`, { published: true }, token))
         .status,

@@ -112,6 +112,7 @@ All paths below begin `/admin`.
 | Method     | Path                                                                            | Behavior                                                      |
 | ---------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------- |
 | GET, POST  | `/artists`, `/albums`, `/categories`, `/tags`, `/songs`, `/plans`, `/playlists` | Paginated list/create                                         |
+| DELETE     | `/artists/:id`                                                               | Delete an artist that is not referenced by a song or album    |
 | GET, PATCH | Same resources plus `/:id`                                                      | Read/update validated fields                                  |
 | DELETE     | `/playlists/:id`                                                                | Delete playlist                                               |
 | GET        | `/users`                                                                        | Paginated users                                               |
@@ -130,7 +131,7 @@ All paths below begin `/admin`.
 
 Create/update bodies:
 
-- Artist: `{name,bio?}`.
+- Artist: `{name,bio?}`. Artist names are unique without regard to letter case.
 - Album: `{title,artist,releaseDate?}`.
 - Category: `{name,slug,parent?}`. Parent must already exist; parent changes are excluded from PATCH, so cycles cannot be introduced through the API. Rename by patching name/slug. Create replacement records to reorganize the tree.
 - Tag: `{name,slug}`.
@@ -141,7 +142,7 @@ Create/update bodies:
 - Subscription: `{plan,startsAt,endsAt,status:"active"|"cancelled",externalReference?}`. Replacement revokes existing downloads and device registrations.
 - Notification: `{user,title,body,dedupeKey:UUID}`. Same dedupe key is idempotent.
 
-Artists/albums/categories/tags/songs are edited in place rather than hard-deleted to preserve references and listening history. Unpublish songs, disable licenses, or deactivate plans to remove availability.
+Albums/categories/tags/songs are edited in place rather than hard-deleted to preserve references and listening history. An unused artist can be deleted; artists referenced by a song or album return `ARTIST_IN_USE`. Unpublish songs, disable licenses, or deactivate plans to remove availability.
 
 ### Upload workflow
 

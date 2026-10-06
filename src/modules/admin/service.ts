@@ -17,6 +17,13 @@ export async function validateReferences(input: any) {
     }
   }
 }
+
+export async function ensureUniqueArtistName(name: string, excludeId?: string) {
+  const query: Record<string, unknown> = { name };
+  if (excludeId) query._id = { $ne: excludeId };
+  const duplicate = await Artist.exists(query).collation({ locale: 'en', strength: 2 });
+  ensure(!duplicate, 409, 'ARTIST_NAME_EXISTS');
+}
 export async function createUpload(
   songId: string,
   input: { kind: 'audio' | 'cover'; contentType: string; data: Buffer },
