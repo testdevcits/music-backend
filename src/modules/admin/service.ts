@@ -32,17 +32,21 @@ const parseFields = (value?: string) =>
     .map((part) => part.trim().toLowerCase())
     .filter(Boolean);
 
-function pickFirst(...candidates: any[]) {
+function pickFirst(...candidates: unknown[]): unknown {
   for (const candidate of candidates) {
     if (candidate === null || candidate === undefined) continue;
     if (typeof candidate === 'string' && candidate.trim() === '') continue;
     if (Array.isArray(candidate)) {
-      const nested = pickFirst(...candidate);
+      const nested: unknown = pickFirst(...candidate);
       if (nested !== undefined) return nested;
       continue;
     }
     if (typeof candidate === 'object') {
-      const nested = pickFirst(candidate.name, candidate.title, candidate.value);
+      const nested: unknown = pickFirst(
+        (candidate as { name?: unknown }).name,
+        (candidate as { title?: unknown }).title,
+        (candidate as { value?: unknown }).value,
+      );
       if (nested !== undefined) return nested;
     }
     return candidate;
