@@ -1,5 +1,15 @@
 import 'dotenv/config';
 import { z } from 'zod';
+
+const optionalRedisUrl = z.preprocess(
+  (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+  z
+    .string()
+    .url()
+    .refine((value) => /^rediss?:\/\//.test(value), 'Use redis:// or rediss://')
+    .optional(),
+);
+
 const schema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().min(1).max(65535).default(4000),
@@ -9,10 +19,7 @@ const schema = z.object({
     .string()
     .regex(/^[a-zA-Z0-9_-]+$/)
     .default('music-platform'),
-  REDIS_URL: z
-    .string()
-    .url()
-    .refine((value) => /^rediss?:\/\//.test(value), 'Use redis:// or rediss://'),
+  REDIS_URL: optionalRedisUrl,
   JWT_SECRET: z.string().min(32),
   JWT_ISSUER: z.string().default('music-platform'),
   JWT_AUDIENCE: z.string().default('music-platform-app'),

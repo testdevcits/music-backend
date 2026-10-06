@@ -1,7 +1,7 @@
 import { RequestHandler } from 'express';
 import mongoose from 'mongoose';
 import { z } from 'zod';
-import { audioQueue, notificationQueue } from '../../infrastructure/queues';
+import { requireAudioQueue, requireNotificationQueue } from '../../infrastructure/queues';
 import { ensure } from '../../shared/errors';
 import { id, name, page } from '../../shared/validation';
 import { RefreshSession, User } from '../auth/models';
@@ -93,7 +93,7 @@ export const postSongsIdUploads: RequestHandler = async (req, res) => {
 export const postUploadsIdComplete: RequestHandler = async (req, res) =>
   res.status(202).json(await service.completeUpload(id.parse(req.params.id)));
 export const getJobsId: RequestHandler = async (req, res) => {
-  const job = await audioQueue.getJob(id.parse(req.params.id));
+  const job = await requireAudioQueue().getJob(id.parse(req.params.id));
   ensure(job, 404, 'NOT_FOUND');
   res.json({
     id: job.id,
@@ -104,7 +104,7 @@ export const getJobsId: RequestHandler = async (req, res) => {
   });
 };
 export const postJobsIdRetry: RequestHandler = async (req, res) => {
-  const job = await audioQueue.getJob(id.parse(req.params.id));
+  const job = await requireAudioQueue().getJob(id.parse(req.params.id));
   ensure(job, 404, 'NOT_FOUND');
   ensure((await job.getState()) === 'failed', 409, 'JOB_NOT_FAILED');
   await job.retry();
@@ -155,7 +155,7 @@ export const postNotifications: RequestHandler = async (req, res) => {
     .strict()
     .parse(req.body);
   ensure(await User.exists({ _id: input.user }), 404, 'NOT_FOUND');
-  await notificationQueue.add('notify', input, { jobId: input.dedupeKey });
+  await requireNotificationQueue().add('notify', input, { jobId: input.dedupeKey });
   res.sendStatus(202);
 };
 export const getAnalytics: RequestHandler = async (req, res) => {

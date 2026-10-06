@@ -49,24 +49,31 @@ app.get('/health/ready', async (req, res) => {
   try {
     await connect();
     if (mongoose.connection.readyState !== 1) throw Error();
-    await redis.ping();
-    res.json({ status: 'ready' });
+    if (redis) await redis.ping();
+    res.json({ status: 'ready', backgroundJobs: redis ? 'enabled' : 'disabled' });
   } catch (err) {
     logger.warn({ err, requestId: req.id }, 'Readiness check failed');
     res.status(503).json({ status: 'unavailable' });
   }
 });
-const limiter = (prefix: string, limit: number) =>
-  rateLimit({
+const limiter = (prefix: string, limit: number) => {
+  const options = {
     windowMs: 60000,
     limit,
-    standardHeaders: 'draft-8',
+    standardHeaders: 'draft-8' as const,
     legacyHeaders: false,
+  };
+  const rateLimitRedis = redis;
+  if (!rateLimitRedis) return rateLimit(options);
+  return rateLimit({
+    ...options,
     store: new RedisStore({
       prefix: `${env.QUEUE_PREFIX}:${prefix}`,
-      sendCommand: async (...args: string[]) => redis.call(args[0], ...args.slice(1)) as any,
+      sendCommand: async (...args: string[]) =>
+        rateLimitRedis.call(args[0], ...args.slice(1)) as any,
     }),
   });
+};
 app.use('/api/v1', async (_req, _res, next) => {
   try {
     await connect();

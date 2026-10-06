@@ -1,11 +1,12 @@
 import { Worker } from 'bullmq';
 import { env } from '../config/env';
 import { connect, disconnect, logger } from '../infrastructure/connections';
-import { closeQueues, queueConnection } from '../infrastructure/queues';
+import { closeQueues, requireQueueConnection } from '../infrastructure/queues';
 import { Notification } from '../modules/library/models';
 import { processAudio } from './audio';
 async function main() {
   await connect();
+  const queueConnection = requireQueueConnection();
   const audio = new Worker('audio', processAudio, {
     connection: queueConnection,
     prefix: env.QUEUE_PREFIX,

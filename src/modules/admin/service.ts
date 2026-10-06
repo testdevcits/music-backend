@@ -1,6 +1,6 @@
 import { env } from '../../config/env';
 import { saveBuffer } from '../../infrastructure/media';
-import { audioQueue } from '../../infrastructure/queues';
+import { queuesEnabled, requireAudioQueue } from '../../infrastructure/queues';
 import { ensure } from '../../shared/errors';
 import { Album, Artist, Category, Song, Tag, Upload } from '../catalog/models';
 export async function validateReferences(input: any) {
@@ -21,6 +21,7 @@ export async function createUpload(
   songId: string,
   input: { kind: 'audio' | 'cover'; contentType: string; data: Buffer },
 ) {
+  ensure(queuesEnabled, 503, 'AUDIO_PROCESSING_REQUIRES_REDIS');
   ensure(await Song.exists({ _id: songId }), 404, 'NOT_FOUND');
   const bytes = input.data.length;
   ensure(bytes <= env.MAX_UPLOAD_BYTES, 413, 'UPLOAD_TOO_LARGE');
@@ -43,6 +44,7 @@ export async function createUpload(
   return { uploadId: upload._id, status: 'queued', jobId: String(upload._id) };
 }
 export async function completeUpload(uploadId: string) {
+  ensure(queuesEnabled, 503, 'AUDIO_PROCESSING_REQUIRES_REDIS');
   const upload = await Upload.findById(uploadId);
   ensure(upload, 404, 'UPLOAD_NOT_FOUND');
   if (upload.completed) return { status: 'queued', jobId: String(upload._id) };
@@ -72,7 +74,7 @@ export async function completeUpload(uploadId: string) {
     }
   }
   // Queue before marking complete: a failed database write can safely be retried with the same job ID.
-  await audioQueue.add('process', { uploadId: String(upload._id) }, { jobId: String(upload._id) });
+  await requireAudioQueue().add('process', { uploadId: String(upload._id) }, { jobId: String(upload._id) });
   await Upload.updateOne({ _id: upload._id }, { $set: { completed: true } });
   return { status: 'queued', jobId: String(upload._id) };
 }
