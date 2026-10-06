@@ -65,8 +65,8 @@ export const postSongsIdPublish: RequestHandler = async (req, res) => {
   const songId = id.parse(req.params.id);
   const { published } = z.object({ published: z.boolean() }).strict().parse(req.body);
   if (published) {
-    const song = await Song.findById(songId);
-    ensure(song?.processing === 'ready' && song.audio.length === 3, 409, 'AUDIO_NOT_READY');
+    const song: any = await Song.findById(songId);
+    ensure(song?.processing === 'ready' && (song.audio ?? []).length === 3, 409, 'AUDIO_NOT_READY');
     const license = await License.findOne({
       song: songId,
       enabled: true,

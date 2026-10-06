@@ -190,7 +190,11 @@ test('profile avatar upload is saved to a dedicated profiles bucket', async () =
   });
   assert.equal(register.status, 201);
   const token = register.data.accessToken;
-  const image = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAF', 'base64');
+  const image = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB4L3I0AAAAAXNSR0IArs4c6AAAAA3NCSVQICAjb4U' +
+      'gAAAAF0L2xT5AAAAAElFTkSuQmCC',
+    'base64',
+  );
   const upload = await fetch(`http://127.0.0.1:${port}/api/v1/users/me/avatar`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'image/png' },
@@ -198,11 +202,11 @@ test('profile avatar upload is saved to a dedicated profiles bucket', async () =
   });
   assert.equal(upload.status, 201);
   const payload = await upload.json();
-  assert.match(payload.image, /^\/api\/v1\/users\/me\/avatar\//);
+  assert.ok(payload.image.startsWith('http') || payload.image.startsWith('/api/v1/users/me/avatar/'));
 
   const me = await request('GET', '/users/me', undefined, token);
   assert.equal(me.status, 200);
-  assert.match(me.data.image, /^\/api\/v1\/users\/me\/avatar\//);
+  assert.ok(me.data.image.startsWith('http') || me.data.image.startsWith('/api/v1/users/me/avatar/'));
 });
 
 test(

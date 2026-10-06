@@ -8,11 +8,11 @@ import { downloadToPath, saveFile } from '../infrastructure/media';
 import { Song, Upload } from '../modules/catalog/models';
 import { ensure } from '../shared/errors';
 export async function processAudio(job: Job<{ uploadId: string }>) {
-  const upload = await Upload.findById(job.data.uploadId);
+  const upload: any = await Upload.findById(job.data.uploadId);
   ensure(upload, 404, 'UPLOAD_MISSING');
-  const song = await Song.findById(upload.song);
+  const song: any = await Song.findById(upload.song);
   ensure(song, 404, 'SONG_MISSING');
-  const version = String(upload._id);
+  const version = String(upload._id ?? upload.id);
   if (upload.kind === 'audio' && song.audioVersion === version && song.processing === 'ready')
     return;
   if (upload.kind === 'audio') {

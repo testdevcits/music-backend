@@ -49,7 +49,7 @@ export const authenticate: RequestHandler = async (req, _res, next) => {
     );
     throw new ApiError(401, 'INVALID_ACCESS_TOKEN');
   }
-  const user = await User.findById(payload.sub);
+  const user: any = await User.findById(payload.sub);
   if (!user || user.disabled) {
     logger.warn(
       {
@@ -65,7 +65,7 @@ export const authenticate: RequestHandler = async (req, _res, next) => {
     );
   }
   ensure(user && !user.disabled, 401, 'ACCOUNT_UNAVAILABLE');
-  req.auth = { userId: String(user._id), role: user.role! };
+  req.auth = { userId: String(user?._id ?? payload.sub), role: String(user?.role ?? 'user') };
   next();
 };
 export const admin: RequestHandler = (req, _res, next) => {

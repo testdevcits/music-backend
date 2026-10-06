@@ -51,7 +51,7 @@ export const getSearch: RequestHandler = async (req, res) => {
   res.json({ data: await Promise.all(songs.map(songView)), page: q.page });
 };
 export const getMediaCoversId: RequestHandler = async (req, res) => {
-  const song = await Song.findOne({ _id: id.parse(req.params.id), published: true });
+  const song: any = await Song.findOne({ _id: id.parse(req.params.id), published: true });
   if (song?.coverUrl) {
     res.redirect(song.coverUrl);
     return;

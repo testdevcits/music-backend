@@ -1,9 +1,9 @@
 import { ensure } from '../../shared/errors';
 import { License, Song } from './models';
 export async function availableSong(songId: string, offline = false) {
-  const song = await Song.findOne({ _id: songId, published: true, processing: 'ready' });
+  const song: any = await Song.findOne({ _id: songId, published: true, processing: 'ready' });
   ensure(song, 404, 'SONG_UNAVAILABLE');
-  const license = await License.findOne({
+  const license: any = await License.findOne({
     song: songId,
     enabled: true,
     startsAt: { $lte: new Date() },
@@ -13,7 +13,7 @@ export async function availableSong(songId: string, offline = false) {
   });
   ensure(license, 403, 'LICENSE_UNAVAILABLE');
   // Fail closed for territorial licenses until a trusted edge geolocation integration is configured.
-  ensure(license.territories.length === 0, 403, 'TERRITORY_VERIFICATION_REQUIRED');
+  ensure((license.territories ?? []).length === 0, 403, 'TERRITORY_VERIFICATION_REQUIRED');
   return { song, license };
 }
 export async function songView(song: any) {
