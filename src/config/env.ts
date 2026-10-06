@@ -20,6 +20,10 @@ const schema = z.object({
     .regex(/^[a-zA-Z0-9_-]+$/)
     .default('music-platform'),
   REDIS_URL: optionalRedisUrl,
+  BACKGROUND_JOBS_ENABLED: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((value) => value === 'true'),
   JWT_SECRET: z.string().min(32),
   JWT_ISSUER: z.string().default('music-platform'),
   JWT_AUDIENCE: z.string().default('music-platform-app'),
@@ -31,6 +35,13 @@ const schema = z.object({
 });
 export const env = schema
   .superRefine((value, context) => {
+    if (value.BACKGROUND_JOBS_ENABLED && !value.REDIS_URL) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['REDIS_URL'],
+        message: 'REDIS_URL is required when BACKGROUND_JOBS_ENABLED=true',
+      });
+    }
     if (value.NODE_ENV === 'production' && value.JWT_SECRET.startsWith('replace-with-')) {
       context.addIssue({
         code: z.ZodIssueCode.custom,

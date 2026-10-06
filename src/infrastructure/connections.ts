@@ -5,7 +5,7 @@ import { env } from '../config/env';
 export const logger = pino({
   redact: ['req.headers.authorization', 'req.headers.cookie', 'password', 'refreshToken', 'url'],
 });
-export const redis = env.REDIS_URL
+export const redis = env.BACKGROUND_JOBS_ENABLED && env.REDIS_URL
   ? new Redis(env.REDIS_URL, {
       maxRetriesPerRequest: 1,
       connectTimeout: 5000,

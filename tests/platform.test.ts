@@ -78,6 +78,7 @@ before(
       NODE_ENV: 'test',
       MONGO_URI: 'mongodb://127.0.0.1:27919/music_test?replicaSet=music-test',
       REDIS_URL: 'redis://127.0.0.1:16399',
+      BACKGROUND_JOBS_ENABLED: 'true',
       JWT_SECRET: 'integration-test-secret-at-least-32-chars',
       QUEUE_PREFIX: 'music-platform-test',
     });

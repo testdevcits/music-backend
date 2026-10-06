@@ -2,8 +2,8 @@ import { Queue } from 'bullmq';
 import { env } from '../config/env';
 import { ApiError } from '../shared/errors';
 
-export const queuesEnabled = Boolean(env.REDIS_URL);
-const uri = env.REDIS_URL ? new URL(env.REDIS_URL) : undefined;
+export const queuesEnabled = env.BACKGROUND_JOBS_ENABLED && Boolean(env.REDIS_URL);
+const uri = queuesEnabled && env.REDIS_URL ? new URL(env.REDIS_URL) : undefined;
 export const queueConnection = uri
   ? {
       host: uri.hostname,
