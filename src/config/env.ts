@@ -16,7 +16,7 @@ const schema = z.object({
   JWT_SECRET: z.string().min(32),
   JWT_ISSUER: z.string().default('music-platform'),
   JWT_AUDIENCE: z.string().default('music-platform-app'),
-  CORS_ORIGINS: z.string().default('http://localhost:3000'),
+  CORS_ORIGINS: z.string().default('http://localhost:3000,http://localhost:5173'),
   TRUST_PROXY_HOPS: z.coerce.number().int().min(0).default(0),
   MAX_UPLOAD_BYTES: z.coerce.number().int().positive().default(209715200),
   FFMPEG_PATH: z.string().default('ffmpeg'),
