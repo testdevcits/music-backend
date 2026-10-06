@@ -11,6 +11,40 @@ import { Device, Download, Favorite, Notification, Playlist } from './models';
 import * as service from './service';
 import { hasCloudinaryConfig, uploadProfileImageToCloudinary } from '../../infrastructure/cloudinary';
 
+async function migrateLegacyProfileImage(user: any) {
+  const image = normalizeUserImage(user?.image);
+  const match = image?.url.match(/^\/api\/v1\/users\/me\/avatar\/([a-f\d]{24})$/i);
+  if (!match) return user;
+  ensure(hasCloudinaryConfig(), 503, 'CLOUDINARY_CONFIG_MISSING');
+  ensure(mongoose.connection.db, 503, 'DATABASE_UNAVAILABLE');
+
+  const fileId = new mongoose.Types.ObjectId(match[1]);
+  const file = await mongoose.connection.db.collection('profiles.files').findOne({ _id: fileId });
+  ensure(file, 404, 'MEDIA_NOT_FOUND');
+  const chunks: Buffer[] = [];
+  let totalBytes = 0;
+  await new Promise<void>((resolve, reject) => {
+    const stream = new mongoose.mongo.GridFSBucket(mongoose.connection.db!, { bucketName: 'profiles' }).openDownloadStream(fileId);
+    stream.on('data', (chunk: Buffer) => {
+      totalBytes += chunk.length;
+      if (totalBytes > 10 * 1024 * 1024) {
+        stream.destroy(new Error('PROFILE_IMAGE_TOO_LARGE'));
+        return;
+      }
+      chunks.push(chunk);
+    });
+    stream.on('error', reject);
+    stream.on('end', resolve);
+  });
+  const uploaded = await uploadProfileImageToCloudinary(Buffer.concat(chunks), String(user._id));
+  const cloudinaryImage = { url: uploaded.url, alt: uploaded.alt || 'Profile image', publicId: uploaded.publicId };
+  await User.updateOne(
+    { _id: user._id, 'image.url': image?.url },
+    { $set: { image: cloudinaryImage } },
+  );
+  return await User.findById(user._id).select('name email role createdAt image');
+}
+
 function normalizeUserImage(value: unknown) {
   if (!value) return null;
   if (typeof value === 'string') {
@@ -43,7 +77,8 @@ function serializeUser(user: any) {
 
 export const getUsersMe: RequestHandler = async (req, res) => {
   const user = await User.findById(req.auth.userId).select('name email role createdAt image');
-  res.json(serializeUser(user));
+  const currentUser = await migrateLegacyProfileImage(user);
+  res.json(serializeUser(currentUser));
 };
 export const postUsersMeAvatar: RequestHandler = async (req, res) => {
   const contentType = String(req.headers['content-type'] || 'image/png');
