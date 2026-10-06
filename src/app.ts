@@ -29,42 +29,6 @@ app.use(
     },
   }),
 );
-app.use((req, res, next) => {
-  const startedAt = Date.now();
-  const authHeader = req.headers.authorization ? 'present' : 'missing';
-  logger.info(
-    {
-      requestId: req.id,
-      method: req.method,
-      url: req.originalUrl,
-      ip: req.ip,
-      userAgent: req.get('user-agent'),
-      contentType: req.headers['content-type'],
-      authHeader,
-      query: Object.keys(req.query || {}).length ? req.query : undefined,
-    },
-    'API request started',
-  );
-
-  const originalEnd = res.end.bind(res);
-  res.end = ((...args: any[]) => {
-    logger.info(
-      {
-        requestId: req.id,
-        method: req.method,
-        url: req.originalUrl,
-        statusCode: res.statusCode,
-        durationMs: Date.now() - startedAt,
-        authHeader,
-        contentLength: res.getHeader('content-length'),
-      },
-      'API request completed',
-    );
-    return originalEnd(...args);
-  }) as typeof res.end;
-
-  next();
-});
 app.use(helmet());
 app.use(cors({ origin: env.CORS_ORIGINS.split(',').map((v) => v.trim()), credentials: false }));
 app.use(

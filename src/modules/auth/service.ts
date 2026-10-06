@@ -35,29 +35,29 @@ export async function issue(
   return { accessToken: access(user), refreshToken, expiresIn: 900 };
 }
 export async function register(input: { email: string; password: string; name: string; role?: 'user' | 'admin' }) {
-  const user: any = await User.create({
+  const user = await User.create({
     email: input.email,
     name: input.name,
     role: input.role ?? 'user',
     passwordHash: await bcrypt.hash(input.password, 12),
   });
-  return issue(String(user?._id ?? user?.id));
+  return issue(String(user._id));
 }
 const dummyHash = bcrypt.hashSync('dummy password never usable', 12);
 export async function login(input: { email: string; password: string }) {
-  const user: any = await User.findOne({ email: input.email }).select('+passwordHash');
+  const user = await User.findOne({ email: input.email }).select('+passwordHash');
   const valid = await bcrypt.compare(input.password, user?.passwordHash ?? dummyHash);
   ensure(user && valid && !user.disabled, 401, 'INVALID_CREDENTIALS');
-  return issue(String(user?._id ?? user?.id));
+  return issue(String(user._id));
 }
 export async function rotate(token: string) {
-  const old: any = await RefreshSession.findOne({ tokenHash: hash(token) });
+  const old = await RefreshSession.findOne({ tokenHash: hash(token) });
   ensure(old && old.expiresAt > new Date(), 401, 'INVALID_REFRESH_TOKEN');
   if (old.revokedAt) {
     await RefreshSession.updateMany({ family: old.family }, { $set: { revokedAt: new Date() } });
     throw new ApiError(401, 'REFRESH_REUSE_DETECTED');
   }
-  const user: any = await User.findById(old.user);
+  const user = await User.findById(old.user);
   ensure(user && !user.disabled, 401, 'INVALID_REFRESH_TOKEN');
   return mongoose.connection.transaction(async (session) => {
     const consumed = await RefreshSession.findOneAndUpdate(
