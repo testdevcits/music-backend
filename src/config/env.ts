@@ -87,23 +87,4 @@ const parseEnvironment = () =>
     }
   }).parse(process.env);
 
-export const env = new Proxy({} as Record<string, unknown>, {
-  get: (_target, property) => {
-    const value = parseEnvironment();
-    return value[property as keyof typeof value];
-  },
-  has: (_target, property) => {
-    const value = parseEnvironment();
-    return property in value;
-  },
-  ownKeys: () => Object.keys(parseEnvironment()),
-  getOwnPropertyDescriptor: (_target, property) => {
-    const value = parseEnvironment();
-    if (!(property in value)) return undefined;
-    return {
-      enumerable: true,
-      configurable: true,
-      value: value[property as keyof typeof value],
-    };
-  },
-});
+export const env = parseEnvironment();
