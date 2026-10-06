@@ -162,6 +162,25 @@ test('admin can manage categories and tags', async () => {
   assert.equal((await request('DELETE', `/admin/tags/${tag.data._id}`, undefined, token)).status, 204);
 });
 
+test('profile endpoint includes image and persists it', async () => {
+  const register = await request('POST', '/auth/register', {
+    email: 'profile-image@example.com',
+    password: 'strong-password-123',
+    name: 'Profile User',
+    role: 'admin',
+  });
+  assert.equal(register.status, 201);
+  const token = register.data.accessToken;
+
+  const update = await request('PATCH', '/users/me', { image: 'https://cdn.example.com/avatar.png' }, token);
+  assert.equal(update.status, 200);
+  assert.equal(update.data.image, 'https://cdn.example.com/avatar.png');
+
+  const me = await request('GET', '/users/me', undefined, token);
+  assert.equal(me.status, 200);
+  assert.equal(me.data.image, 'https://cdn.example.com/avatar.png');
+});
+
 test(
   'end-to-end authorization, rotation, media, quotas, ownership and revocation',
   async () => {

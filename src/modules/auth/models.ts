@@ -5,6 +5,7 @@ export const User = model(
     {
       email: { type: String, required: true, unique: true, lowercase: true },
       name: { type: String, required: true },
+      image: { type: String, default: '' },
       passwordHash: { type: String, required: true, select: false },
       role: { type: String, enum: ['user', 'admin'], default: 'user' },
       disabled: { type: Boolean, default: false },

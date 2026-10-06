@@ -9,12 +9,18 @@ import { ListeningEvent } from '../playback/models';
 import { Device, Download, Favorite, Notification, Playlist } from './models';
 import * as service from './service';
 export const getUsersMe: RequestHandler = async (req, res) =>
-  res.json(await User.findById(req.auth.userId).select('name email role createdAt'));
+  res.json(await User.findById(req.auth.userId).select('name email role createdAt image'));
 export const patchUsersMe: RequestHandler = async (req, res) => {
-  const input = z.object({ name }).strict().parse(req.body);
+  const input = z
+    .object({
+      name: name.optional(),
+      image: z.string().trim().max(5000).optional(),
+    })
+    .strict()
+    .parse(req.body);
   res.json(
     await User.findByIdAndUpdate(req.auth.userId, { $set: input }, { new: true }).select(
-      'name email role',
+      'name email role image createdAt',
     ),
   );
 };
