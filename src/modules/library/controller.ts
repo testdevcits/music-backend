@@ -9,6 +9,7 @@ import { Song } from '../catalog/models';
 import { ListeningEvent } from '../playback/models';
 import { Device, Download, Favorite, Notification, Playlist } from './models';
 import * as service from './service';
+import { hasCloudinaryConfig, uploadProfileImageToCloudinary } from '../../infrastructure/cloudinary';
 export const getUsersMe: RequestHandler = async (req, res) =>
   res.json(await User.findById(req.auth.userId).select('name email role createdAt image'));
 export const postUsersMeAvatar: RequestHandler = async (req, res) => {
@@ -16,13 +17,41 @@ export const postUsersMeAvatar: RequestHandler = async (req, res) => {
   ensure(/^image\//.test(contentType), 400, 'UNSUPPORTED_CONTENT_TYPE');
   const imageData = Buffer.isBuffer(req.body) ? req.body : Buffer.from(req.body ?? []);
   ensure(imageData.length > 0, 400, 'EMPTY_IMAGE');
+
+  if (hasCloudinaryConfig()) {
+    try {
+      const cloudinaryUpload = await uploadProfileImageToCloudinary(imageData, req.auth.userId);
+      ensure(cloudinaryUpload, 500, 'CLOUDINARY_CONFIG_INVALID');
+      const user = await User.findByIdAndUpdate(
+        req.auth.userId,
+        {
+          $set: {
+            image: {
+              url: cloudinaryUpload.url,
+              alt: cloudinaryUpload.alt || 'Profile image',
+              publicId: cloudinaryUpload.publicId,
+            },
+          },
+        },
+        { new: true },
+      ).select('name email role image createdAt');
+      return res.status(201).json(user);
+    } catch (error) {
+      const message = String((error as Error)?.message || '');
+      if (message.includes('Invalid image file') || message.includes('CLOUDINARY_UPLOAD_FAILED')) {
+        throw new Error('INVALID_IMAGE');
+      }
+      throw error;
+    }
+  }
+
   const fileId = await saveBufferToBucket(
     imageData,
     `profile-${req.auth.userId}-${Date.now()}.png`,
     contentType,
     'profiles',
   );
-  const image = `/api/v1/users/me/avatar/${fileId}`;
+  const image = { url: `/api/v1/users/me/avatar/${fileId}`, alt: 'Profile image' };
   const user = await User.findByIdAndUpdate(req.auth.userId, { $set: { image } }, { new: true }).select(
     'name email role image createdAt',
   );
@@ -31,7 +60,13 @@ export const postUsersMeAvatar: RequestHandler = async (req, res) => {
 export const getUsersMeAvatarId: RequestHandler = async (req, res) => {
   const fileId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const user = await User.findById(req.auth.userId).select('image');
-  const currentImage = user?.image ? String(user.image) : '';
+  const rawImage = user?.image;
+  const currentImage =
+    typeof rawImage === 'string'
+      ? rawImage
+      : rawImage && typeof rawImage === 'object' && 'url' in rawImage
+        ? String(rawImage.url)
+        : '';
   const expectedPath = `/api/v1/users/me/avatar/${fileId}`;
   if (!currentImage || currentImage !== expectedPath) {
     return res.status(403).json({ error: { code: 'FORBIDDEN' } });
@@ -49,7 +84,16 @@ export const patchUsersMe: RequestHandler = async (req, res) => {
   const input = z
     .object({
       name: name.optional(),
-      image: z.string().trim().max(5000).optional(),
+      image: z
+        .union([
+          z.string().trim().max(5000),
+          z.object({
+            url: z.string().trim().max(5000),
+            alt: z.string().trim().max(200).optional(),
+            publicId: z.string().trim().max(500).optional(),
+          }),
+        ])
+        .optional(),
     })
     .strict()
     .parse(req.body);

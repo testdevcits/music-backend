@@ -6,7 +6,7 @@ const userSchema = withSecureId(
     {
       email: { type: String, required: true, unique: true, lowercase: true },
       name: { type: String, required: true },
-      image: { type: String, default: '' },
+      image: { type: Schema.Types.Mixed, default: null },
       passwordHash: { type: String, required: true, select: false },
       role: { type: String, enum: ['user', 'admin'], default: 'user' },
       disabled: { type: Boolean, default: false },

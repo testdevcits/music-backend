@@ -9,23 +9,32 @@ export function hasCloudinaryConfig() {
   );
 }
 
-export async function uploadCoverToCloudinary(data: Buffer, songId: string) {
+type CloudinaryUploadResult = {
+  url: string;
+  publicId: string;
+  alt?: string;
+};
+
+async function uploadToCloudinary(data: Buffer, folder: string, publicId: string, alt?: string): Promise<CloudinaryUploadResult> {
   const cloudName = env.CLOUDINARY_CLOUD_NAME;
   const apiKey = env.CLOUDINARY_API_KEY;
   const apiSecret = env.CLOUDINARY_API_SECRET;
-  if (!cloudName || !apiKey || !apiSecret) return null;
+  if (!cloudName || !apiKey || !apiSecret) throw new Error('CLOUDINARY_CONFIG_INVALID');
+
   cloudinary.config({
     cloud_name: cloudName,
     api_key: apiKey,
     api_secret: apiSecret,
   });
 
-  const result = await new Promise<{ url: string; publicId: string }>((resolve, reject) => {
+  return await new Promise<CloudinaryUploadResult>((resolve, reject) => {
     const upload = cloudinary.uploader.upload_stream(
       {
-        folder: 'music-platform/covers',
+        folder,
         resource_type: 'image',
-        public_id: `song-${songId}-${Date.now()}`,
+        public_id: publicId,
+        overwrite: true,
+        invalidate: true,
       },
       (error, uploadResult) => {
         if (error) {
@@ -39,89 +48,22 @@ export async function uploadCoverToCloudinary(data: Buffer, songId: string) {
         resolve({
           url: uploadResult.secure_url,
           publicId: uploadResult.public_id,
+          alt,
         });
       },
     );
     upload.end(data);
   });
+}
 
-  return result;
+export async function uploadCoverToCloudinary(data: Buffer, songId: string) {
+  return uploadToCloudinary(data, 'music-platform/covers', `song-${songId}`, 'Song cover');
 }
 
 export async function uploadProfileImageToCloudinary(data: Buffer, userId: string) {
-  const cloudName = env.CLOUDINARY_CLOUD_NAME;
-  const apiKey = env.CLOUDINARY_API_KEY;
-  const apiSecret = env.CLOUDINARY_API_SECRET;
-  if (!cloudName || !apiKey || !apiSecret) return null;
-  cloudinary.config({
-    cloud_name: cloudName,
-    api_key: apiKey,
-    api_secret: apiSecret,
-  });
-
-  const result = await new Promise<{ url: string; publicId: string }>((resolve, reject) => {
-    const upload = cloudinary.uploader.upload_stream(
-      {
-        folder: 'music-platform/profiles',
-        resource_type: 'image',
-        public_id: `user-${userId}-${Date.now()}`,
-      },
-      (error, uploadResult) => {
-        if (error) {
-          reject(error);
-          return;
-        }
-        if (!uploadResult?.secure_url || !uploadResult.public_id) {
-          reject(new Error('CLOUDINARY_UPLOAD_FAILED'));
-          return;
-        }
-        resolve({
-          url: uploadResult.secure_url,
-          publicId: uploadResult.public_id,
-        });
-      },
-    );
-    upload.end(data);
-  });
-
-  return result;
+  return uploadToCloudinary(data, 'music-platform/profiles', `user-${userId}`, 'Profile image');
 }
 
 export async function uploadBrandLogoToCloudinary(data: Buffer, brandId: string) {
-  const cloudName = env.CLOUDINARY_CLOUD_NAME;
-  const apiKey = env.CLOUDINARY_API_KEY;
-  const apiSecret = env.CLOUDINARY_API_SECRET;
-  if (!cloudName || !apiKey || !apiSecret) return null;
-  cloudinary.config({
-    cloud_name: cloudName,
-    api_key: apiKey,
-    api_secret: apiSecret,
-  });
-
-  const result = await new Promise<{ url: string; publicId: string }>((resolve, reject) => {
-    const upload = cloudinary.uploader.upload_stream(
-      {
-        folder: 'music-platform/logos',
-        resource_type: 'image',
-        public_id: `brand-${brandId}-${Date.now()}`,
-      },
-      (error, uploadResult) => {
-        if (error) {
-          reject(error);
-          return;
-        }
-        if (!uploadResult?.secure_url || !uploadResult.public_id) {
-          reject(new Error('CLOUDINARY_UPLOAD_FAILED'));
-          return;
-        }
-        resolve({
-          url: uploadResult.secure_url,
-          publicId: uploadResult.public_id,
-        });
-      },
-    );
-    upload.end(data);
-  });
-
-  return result;
+  return uploadToCloudinary(data, 'music-platform/logos', `brand-${brandId}`, 'Brand logo');
 }
