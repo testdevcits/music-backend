@@ -180,6 +180,12 @@ adminRoutes.delete('/tags/:id', async (req, res) => {
   ensure(tag, 404, 'NOT_FOUND');
   res.status(204).send();
 });
+adminRoutes.delete('/songs/:id', async (req, res) => {
+  const songId = id.parse(req.params.id);
+  const song = await Song.findByIdAndDelete(songId);
+  ensure(song, 404, 'NOT_FOUND');
+  res.status(204).send();
+});
 adminRoutes.delete('/playlists/:id', controller.deletePlaylistsId);
 adminRoutes.get('/users', controller.getUsers);
 adminRoutes.patch('/users/:id', controller.patchUsersId);
