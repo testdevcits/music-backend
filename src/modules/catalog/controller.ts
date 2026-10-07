@@ -3,6 +3,7 @@ import { streamFile } from '../../infrastructure/media';
 import { z } from 'zod';
 import { ensure } from '../../shared/errors';
 import { id, page, songId } from '../../shared/validation';
+import { Song } from './models';
 import { findSong, songView } from './service';
 export const getSongs: RequestHandler = async (req, res) => {
   const q = page
