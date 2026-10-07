@@ -225,6 +225,7 @@ adminRoutes.delete('/songs/:id', async (req, res) => {
 });
 adminRoutes.delete('/playlists/:id', controller.deletePlaylistsId);
 adminRoutes.get('/users', controller.getUsers);
+adminRoutes.get('/users/:id/details', controller.getUsersIdDetails);
 adminRoutes.get('/dashboard', controller.getDashboardOverview);
 adminRoutes.patch('/users/:id', controller.patchUsersId);
 adminRoutes.put('/licenses/:songId', controller.putLicensesSongId);

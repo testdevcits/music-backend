@@ -15,6 +15,6 @@ export const credentials = z
   .strict();
 export const registration = credentials.extend({
   name: z.string().trim().min(1).max(100),
-  role: z.enum(['user', 'admin']).optional().default('user'),
 });
+export const googleCredential = z.object({ idToken: z.string().min(100).max(10000) }).strict();
 export const refreshInput = z.object({ refreshToken: z.string().min(40).max(200) }).strict();

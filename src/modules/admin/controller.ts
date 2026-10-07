@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { requireAudioQueue, requireNotificationQueue } from '../../infrastructure/queues';
 import { ensure } from '../../shared/errors';
 import { id, name, page } from '../../shared/validation';
-import { RefreshSession, User } from '../auth/models';
+import { allocateUserPublicId, RefreshSession, User } from '../auth/models';
 import { Plan, Subscription } from '../billing/models';
 import { lockUser } from '../billing/service';
 import { Artist, Category, License, Song, Tag } from '../catalog/models';
@@ -20,11 +20,100 @@ export const deletePlaylistsId: RequestHandler = async (req, res) => {
 };
 export const getUsers: RequestHandler = async (req, res) => {
   const q = page.parse(req.query);
+  const users = await User.find()
+    .select('id name email image publicId role disabled createdAt')
+    .skip((q.page - 1) * q.limit)
+    .limit(q.limit);
+  await Promise.all(users.map(async (user: any) => {
+    if (user.publicId) return;
+    const publicId = await allocateUserPublicId();
+    await User.updateOne({ _id: user._id, $or: [{ publicId: { $exists: false } }, { publicId: null }] }, { $set: { publicId } });
+    user.publicId = (await User.findById(user._id).select('publicId').lean() as any)?.publicId;
+  }));
   res.json({
-    data: await User.find()
-      .select('name email role disabled createdAt')
-      .skip((q.page - 1) * q.limit)
-      .limit(q.limit),
+    data: users,
+  });
+};
+export const getUsersIdDetails: RequestHandler = async (req, res) => {
+  const routeId = z.string().regex(/^(?:[a-f\d]{24}|[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12})$/i).parse(req.params.id);
+  const user: any = await User.findOne(/^[a-f\d]{24}$/i.test(routeId) ? { _id: routeId } : { id: routeId })
+    .select('id name email image publicId role disabled createdAt')
+    .lean();
+  ensure(user, 404, 'NOT_FOUND');
+  if (!user.publicId) {
+    const publicId = await allocateUserPublicId();
+    await User.updateOne({ _id: user._id, $or: [{ publicId: { $exists: false } }, { publicId: null }] }, { $set: { publicId } });
+    user.publicId = (await User.findById(user._id).select('publicId').lean() as any)?.publicId;
+  }
+
+  const match = { user: new mongoose.Types.ObjectId(String(user._id)) };
+  const [totalsRows, songRows, weekdayRows, recentEvents] = await Promise.all([
+    ListeningEvent.aggregate([
+      { $match: match },
+      { $group: {
+        _id: null,
+        events: { $sum: 1 },
+        listenedSeconds: { $sum: '$seconds' },
+        plays: { $sum: { $cond: [{ $eq: ['$type', 'play'] }, 1, 0] } },
+        completions: { $sum: { $cond: [{ $eq: ['$type', 'completion'] }, 1, 0] } },
+      } },
+    ]),
+    ListeningEvent.aggregate([
+      { $match: match },
+      { $group: {
+        _id: '$song',
+        events: { $sum: 1 },
+        listenedSeconds: { $sum: '$seconds' },
+        plays: { $sum: { $cond: [{ $in: ['$type', ['play', 'completion']] }, 1, 0] } },
+        completions: { $sum: { $cond: [{ $eq: ['$type', 'completion'] }, 1, 0] } },
+        lastPlayedAt: { $max: '$createdAt' },
+      } },
+      { $lookup: { from: Song.collection.name, localField: '_id', foreignField: '_id', as: 'song' } },
+      { $unwind: '$song' },
+      { $sort: { listenedSeconds: -1 } },
+      { $limit: 100 },
+      { $project: { events: 1, listenedSeconds: 1, plays: 1, completions: 1, lastPlayedAt: 1, title: '$song.title', genre: '$song.genre', categories: '$song.categories', duration: '$song.duration', coverUrl: '$song.coverUrl', artwork: '$song.artwork' } },
+    ]),
+    ListeningEvent.aggregate([
+      { $match: match },
+      { $group: { _id: { $dayOfWeek: '$createdAt' }, events: { $sum: 1 }, listenedSeconds: { $sum: '$seconds' } } },
+    ]),
+    ListeningEvent.find(match).sort({ createdAt: -1 }).limit(20).lean(),
+  ]);
+
+  const categoryIds = [...new Set(songRows.flatMap((row: any) => row.categories ?? []).map(String))];
+  const categories = categoryIds.length ? await Category.find({ _id: { $in: categoryIds } }).select('name').lean() : [];
+  const categoryNames = new Map(categories.map((category: any) => [String(category._id), category.name]));
+  const categoryTotals = new Map<string, number>();
+  for (const song of songRows as any[]) {
+    const names = new Set<string>();
+    if (song.genre) names.add(String(song.genre));
+    for (const categoryId of song.categories ?? []) {
+      const categoryName = categoryNames.get(String(categoryId));
+      if (categoryName) names.add(categoryName);
+    }
+    for (const categoryName of names) categoryTotals.set(categoryName, (categoryTotals.get(categoryName) ?? 0) + song.listenedSeconds);
+  }
+  const songIds = [...new Set(recentEvents.map((event: any) => String(event.song)))];
+  const recentSongs = songIds.length ? await Song.find({ _id: { $in: songIds } }).select('title genre').lean() : [];
+  const recentSongMap = new Map(recentSongs.map((song: any) => [String(song._id), song]));
+  const totals = totalsRows[0] ?? { events: 0, listenedSeconds: 0, plays: 0, completions: 0 };
+  const weekdayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const weekdayMap = new Map(weekdayRows.map((row: any) => [row._id - 1, row]));
+
+  res.json({
+    user: { ...user, id: String(user.id || user._id), _id: undefined },
+    listening: {
+      totalEvents: totals.events,
+      totalListenedSeconds: totals.listenedSeconds,
+      totalListenedMinutes: Math.round(totals.listenedSeconds / 60),
+      plays: totals.plays,
+      completions: totals.completions,
+      topSongs: songRows.map((song: any) => ({ ...song, id: String(song._id), _id: undefined, categories: (song.categories ?? []).map((value: unknown) => categoryNames.get(String(value))).filter(Boolean) })),
+      topCategories: [...categoryTotals].map(([name, listenedSeconds]) => ({ name, listenedSeconds })).sort((a, b) => b.listenedSeconds - a.listenedSeconds).slice(0, 10),
+      weekdays: weekdayNames.map((name, index) => ({ name, events: weekdayMap.get(index)?.events ?? 0, listenedSeconds: weekdayMap.get(index)?.listenedSeconds ?? 0 })),
+      recentActivity: recentEvents.map((event: any) => ({ type: event.type, seconds: event.seconds, createdAt: event.createdAt, song: recentSongMap.get(String(event.song))?.title ?? 'Deleted song', genre: recentSongMap.get(String(event.song))?.genre ?? null })),
+    },
   });
 };
 export const getDashboardOverview: RequestHandler = async (_req, res) => {
@@ -78,7 +167,10 @@ export const getDashboardOverview: RequestHandler = async (_req, res) => {
   });
 };
 export const patchUsersId: RequestHandler = async (req, res) => {
-  const user = id.parse(req.params.id);
+  const routeId = z.string().regex(/^(?:[a-f\d]{24}|[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12})$/i).parse(req.params.id);
+  const existingUser: any = await User.findOne(/^[a-f\d]{24}$/i.test(routeId) ? { _id: routeId } : { id: routeId }).select('_id');
+  ensure(existingUser, 404, 'NOT_FOUND');
+  const user = String(existingUser._id);
   const input = z
     .object({ name: name.optional(), disabled: z.boolean().optional() })
     .strict()

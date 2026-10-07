@@ -12,12 +12,13 @@ Errors use `{ "error": { "code": "PLAN_RESTRICTED", "message": "PLAN_RESTRICTED"
 | ------ | ---------------- | ------------------------------------- |
 | POST   | `/auth/register` | `{name,email,password}` → 201 tokens  |
 | POST   | `/auth/login`    | `{email,password}` → tokens           |
+| POST   | `/auth/google`   | `{idToken}` verified Google ID token → tokens |
 | POST   | `/auth/refresh`  | `{refreshToken}` → rotated token pair |
 | POST   | `/auth/logout`   | `{refreshToken}` → 204, revoke family |
 | GET    | `/users/me`      | Current profile                       |
 | PATCH  | `/users/me`      | `{name}`                              |
 
-Passwords must be at least 12 characters and at most 72 UTF-8 bytes. Token response: `{accessToken,refreshToken,expiresIn:900}`. Store the replacement refresh token atomically and never use the previous token again.
+Passwords must be at least 8 characters and at most 72 UTF-8 bytes. Public signup always creates a listener account, never an admin. Token response: `{accessToken,refreshToken,expiresIn:900}`. Store the replacement refresh token atomically and never use the previous token again. Google login requires `GOOGLE_CLIENT_ID` and verifies the ID token server-side; see [AUTH_API.md](AUTH_API.md) for client setup, request examples, and auth errors.
 
 ```bash
 curl -X POST http://localhost:4000/api/v1/auth/register \
