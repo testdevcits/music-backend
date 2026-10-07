@@ -1,8 +1,8 @@
 # REST API v1
 
-Base URL: `http://localhost:4000/api/v1`. JSON request/response bodies. Except authentication and `/health/*`, all endpoints require `Authorization: Bearer <accessToken>`. Admin endpoints additionally require a current admin role. Private responses use `Cache-Control: no-store`.
+Base URL: `http://localhost:4000/api/v1`. JSON request/response bodies. Except authentication and `/health/*`, all endpoints require `Authorization: Bearer <accessToken>`. Admin endpoints additionally require a current admin role. Private responses use `Cache-Control: no-store`. See [APP_DEVELOPER_GUIDE.md](APP_DEVELOPER_GUIDE.md) for a listener app's end-to-end auth, wishlist, playlist, online-playback, and offline-download flows.
 
-List endpoints generally accept `page=1&limit=20` (maximum 100) and return `{data:[...]}` with page metadata where implemented. Use the resource `id` returned by an endpoint; selected routes also accept MongoDB object IDs for backwards compatibility. Timestamps are ISO 8601 UTC. Unknown request-body fields are rejected.
+List endpoints generally accept `page=1&limit=20` (maximum 100) and return `{data:[...]}` with page metadata where implemented. Use the resource `id` returned by an endpoint; playlist, song, device, and download routes accept public UUID IDs and legacy MongoDB object IDs. Timestamps are ISO 8601 UTC. Unknown request-body fields are rejected.
 
 Errors use `{ "error": { "code": "PLAN_RESTRICTED", "message": "PLAN_RESTRICTED" } }`; validation errors include `details`. Common statuses: 400 invalid input, 401 login/token failure, 403 permission/plan/license restriction, 404 missing or inaccessible resource, 409 conflict/limit/state issue, 410 upload expired, 413 oversized upload, 429 rate limit, 500 internal failure. Quota denials return 403.
 
@@ -47,11 +47,11 @@ Example: `GET /songs?artistName=Rib%20hav&category=bhakti&decade=1990&sort=year-
 | Method      | Path                           | Input / behavior                                               |
 | ----------- | ------------------------------ | -------------------------------------------------------------- |
 | GET, POST   | `/playlists`                   | List owned playlists; create `{name?,public?}`; omitted name becomes `Playlist 1`, `Playlist 2`, etc. |
-| GET         | `/playlists/:id`               | Owner or public playlist; includes ordered playable `items` plus song IDs |
+| GET         | `/playlists/:id`               | Authenticated owner or authenticated viewer of a public playlist; includes ordered playable `items` plus song IDs |
 | PATCH       | `/playlists/:id`               | Owner changes `{name?,public?}`                                |
 | DELETE      | `/playlists/:id`               | Owner deletes                                                  |
 | PUT, DELETE | `/playlists/:id/songs/:songId` | Owner adds/removes song; maximum 1,000 entries                 |
-| GET         | `/favorites`                   | Wishlist/favorite records with song IDs                         |
+| GET         | `/favorites`                   | Wishlist/favorite records with song IDs and pagination metadata (`page`, `limit`, `total`, `pages`) |
 | PUT, DELETE | `/favorites/:songId`           | Idempotent favorite/unfavorite                                 |
 | GET         | `/history`                     | Newest listening events first, including song ID/type/duration |
 | DELETE      | `/history`                     | Delete the user's listening events                             |
@@ -110,7 +110,7 @@ The entitlement response contains `url`, `entitlementExpiresAt`, `quality`, `con
 | GET    | `/subscriptions/me`     | Current subscription plus effective policy        |
 | POST   | `/subscriptions/cancel` | Immediate cancellation; revokes downloads/devices |
 
-Plan fields: name, slug, priceMinor (integer currency units), currency, offlineLimit, deviceLimit, offlineDays, qualities, active. Free policy: no offline downloads, one registered device, 64 kbps. Expired/cancelled/inactive-plan subscriptions fall back to free. End users cannot grant themselves subscriptions; verified billing is an integration point.
+Plan fields: name, slug, priceMinor (integer currency units), currency, offlineLimit, deviceLimit, offlineDays, qualities, active. Free policy: no offline downloads, one registered device, 64 kbps. Expired/cancelled/inactive-plan subscriptions fall back to free. End users cannot grant themselves subscriptions; verified billing is an integration point. Offline grants require an available audio file ID; otherwise the request returns `409 OFFLINE_AUDIO_UNAVAILABLE` before consuming a quota slot.
 
 ## Administration
 

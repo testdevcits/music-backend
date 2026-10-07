@@ -3,10 +3,11 @@ import { RequestHandler } from 'express';
 import { z } from 'zod';
 import { ensure } from '../../shared/errors';
 import { streamBucketFile, streamFile } from '../../infrastructure/media';
-import { id, name, page, publicOrMongoId, quality } from '../../shared/validation';
+import { identityForResourceId } from '../../shared/ids';
+import { name, page, publicOrMongoId, quality, songId } from '../../shared/validation';
 import { User } from '../auth/models';
 import { Song } from '../catalog/models';
-import { songView } from '../catalog/service';
+import { findSong, songView } from '../catalog/service';
 import { ListeningEvent } from '../playback/models';
 import { Device, Download, Favorite, Notification, Playlist } from './models';
 import * as service from './service';
@@ -185,7 +186,7 @@ export const postPlaylists: RequestHandler = async (req, res) => {
 };
 export const getPlaylistsId: RequestHandler = async (req, res) => {
   const row = await Playlist.findOne({
-    _id: id.parse(req.params.id),
+    ...identityForResourceId(publicOrMongoId.parse(req.params.id)),
     $or: [{ owner: req.auth.userId }, { public: true }],
   });
   ensure(row, 404, 'NOT_FOUND');
@@ -203,7 +204,7 @@ export const patchPlaylistsId: RequestHandler = async (req, res) => {
     .strict()
     .parse(req.body);
   const row = await Playlist.findOneAndUpdate(
-    { _id: id.parse(req.params.id), owner: req.auth.userId },
+    { ...identityForResourceId(publicOrMongoId.parse(req.params.id)), owner: req.auth.userId },
     { $set: input },
     { new: true },
   );
@@ -211,53 +212,62 @@ export const patchPlaylistsId: RequestHandler = async (req, res) => {
   res.json(row);
 };
 export const deletePlaylistsId: RequestHandler = async (req, res) => {
-  await Playlist.deleteOne({ _id: id.parse(req.params.id), owner: req.auth.userId });
+  await Playlist.deleteOne({ ...identityForResourceId(publicOrMongoId.parse(req.params.id)), owner: req.auth.userId });
   res.sendStatus(204);
 };
 export const putPlaylistsIdSongsSongId: RequestHandler = async (req, res) => {
-  const songId = id.parse(req.params.songId);
-  ensure(await Song.exists({ _id: songId, published: true, processing: 'ready' }), 404, 'SONG_UNAVAILABLE');
+  const song = await findSong(songId.parse(req.params.songId), { published: true, processing: 'ready' });
+  ensure(song, 404, 'SONG_UNAVAILABLE');
   const playlist = await Playlist.findOneAndUpdate(
     {
-      _id: id.parse(req.params.id),
+      ...identityForResourceId(publicOrMongoId.parse(req.params.id)),
       owner: req.auth.userId,
-      $or: [{ songs: songId }, { 'songs.999': { $exists: false } }],
+      $or: [{ songs: song._id }, { 'songs.999': { $exists: false } }],
     },
-    { $addToSet: { songs: songId } },
+    { $addToSet: { songs: song._id } },
     { new: true },
   );
   ensure(playlist, 409, 'PLAYLIST_UNAVAILABLE_OR_FULL');
   res.json(playlist);
 };
 export const deletePlaylistsIdSongsSongId: RequestHandler = async (req, res) => {
-  await Playlist.updateOne(
-    { _id: id.parse(req.params.id), owner: req.auth.userId },
-    { $pull: { songs: id.parse(req.params.songId) } },
+  const requestedSongId = songId.parse(req.params.songId);
+  const song = await findSong(requestedSongId);
+  const mongoSongId = song?._id ?? (/^[a-f\d]{24}$/i.test(requestedSongId) ? requestedSongId : null);
+  if (mongoSongId) await Playlist.updateOne(
+    { ...identityForResourceId(publicOrMongoId.parse(req.params.id)), owner: req.auth.userId },
+    { $pull: { songs: mongoSongId } },
   );
   res.sendStatus(204);
 };
 export const getFavorites: RequestHandler = async (req, res) => {
   const q = page.parse(req.query);
-  res.json({
-    data: await Favorite.find({ user: req.auth.userId })
+  const filter = { user: req.auth.userId };
+  const [data, total] = await Promise.all([
+    Favorite.find(filter)
       .sort({ createdAt: -1 })
       .skip((q.page - 1) * q.limit)
       .limit(q.limit),
-  });
+    Favorite.countDocuments(filter),
+  ]);
+  res.json({ data, page: q.page, limit: q.limit, total, pages: Math.ceil(total / q.limit) });
 };
 export const putFavoritesSongId: RequestHandler = async (req, res) => {
-  const song = id.parse(req.params.songId);
-  ensure(await Song.exists({ _id: song, published: true }), 404, 'SONG_UNAVAILABLE');
+  const song = await findSong(songId.parse(req.params.songId), { published: true, processing: 'ready' });
+  ensure(song, 404, 'SONG_UNAVAILABLE');
   res.json(
     await Favorite.findOneAndUpdate(
-      { user: req.auth.userId, song },
-      { $setOnInsert: { user: req.auth.userId, song } },
+      { user: req.auth.userId, song: song._id },
+      { $setOnInsert: { user: req.auth.userId, song: song._id } },
       { upsert: true, new: true },
     ),
   );
 };
 export const deleteFavoritesSongId: RequestHandler = async (req, res) => {
-  await Favorite.deleteOne({ user: req.auth.userId, song: id.parse(req.params.songId) });
+  const requestedSongId = songId.parse(req.params.songId);
+  const song = await findSong(requestedSongId);
+  const mongoSongId = song?._id ?? (/^[a-f\d]{24}$/i.test(requestedSongId) ? requestedSongId : null);
+  if (mongoSongId) await Favorite.deleteOne({ user: req.auth.userId, song: mongoSongId });
   res.sendStatus(204);
 };
 export const getHistory: RequestHandler = async (req, res) => {
@@ -287,11 +297,11 @@ export const postDevices: RequestHandler = async (req, res) => {
 export const getDevices: RequestHandler = async (req, res) =>
   res.json({ data: await Device.find({ user: req.auth.userId, revokedAt: null }).limit(100) });
 export const deleteDevicesId: RequestHandler = async (req, res) => {
-  await service.revokeDevice(req.auth.userId, id.parse(req.params.id));
+  await service.revokeDevice(req.auth.userId, publicOrMongoId.parse(req.params.id));
   res.sendStatus(204);
 };
 export const postDownloads: RequestHandler = async (req, res) => {
-  const input = z.object({ song: id, device: id, quality }).strict().parse(req.body);
+  const input = z.object({ song: songId, device: publicOrMongoId, quality }).strict().parse(req.body);
   res.status(201).json(await service.grantDownload(req.auth.userId, input, requestCountry(req)));
 };
 export const getDownloads: RequestHandler = async (req, res) => {
@@ -307,19 +317,19 @@ export const getDownloads: RequestHandler = async (req, res) => {
   });
 };
 export const postDownloadsIdUrl: RequestHandler = async (req, res) => {
-  const { device } = z.object({ device: id }).strict().parse(req.body);
+  const { device } = z.object({ device: publicOrMongoId }).strict().parse(req.body);
   res
     .set('Cache-Control', 'no-store')
-    .json(await service.downloadUrl(req.auth.userId, id.parse(req.params.id), device, requestCountry(req)));
+    .json(await service.downloadUrl(req.auth.userId, publicOrMongoId.parse(req.params.id), device, requestCountry(req)));
 };
 export const getDownloadsIdAudio: RequestHandler = async (req, res) => {
-  const device = id.parse(req.query.device);
-  const media = await service.downloadFile(req.auth.userId, id.parse(req.params.id), device, requestCountry(req));
+  const device = publicOrMongoId.parse(req.query.device);
+  const media = await service.downloadFile(req.auth.userId, publicOrMongoId.parse(req.params.id), device, requestCountry(req));
   streamFile(media.fileId, media.mime, res);
 };
 export const deleteDownloadsId: RequestHandler = async (req, res) => {
   await Download.updateOne(
-    { _id: id.parse(req.params.id), user: req.auth.userId },
+    { ...identityForResourceId(publicOrMongoId.parse(req.params.id)), user: req.auth.userId },
     { $set: { revokedAt: new Date() } },
   );
   res.sendStatus(204);

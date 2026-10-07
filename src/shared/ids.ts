@@ -1,6 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import type { Schema } from 'mongoose';
 
+export function identityForResourceId(value: string) {
+  return /^[a-f\d]{24}$/i.test(value) ? { _id: value } : { id: value };
+}
+
 export function withSecureId(schema: Schema) {
   schema.add({
     id: { type: String, unique: true, index: true, default: () => randomUUID() },

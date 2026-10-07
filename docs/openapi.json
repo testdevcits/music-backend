@@ -2310,7 +2310,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "pattern": "^[a-fA-F0-9]{24}$"
+              "pattern": "^(?:[a-fA-F0-9]{24}|[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})$"
             }
           }
         ]
@@ -2410,7 +2410,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "pattern": "^[a-fA-F0-9]{24}$"
+              "pattern": "^(?:[a-fA-F0-9]{24}|[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})$"
             }
           }
         ],
@@ -2523,7 +2523,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "pattern": "^[a-fA-F0-9]{24}$"
+              "pattern": "^(?:[a-fA-F0-9]{24}|[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})$"
             }
           }
         ]
@@ -2625,7 +2625,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "pattern": "^[a-fA-F0-9]{24}$"
+              "pattern": "^(?:[a-fA-F0-9]{24}|[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})$"
             }
           },
           {
@@ -2634,7 +2634,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "pattern": "^[a-fA-F0-9]{24}$"
+              "pattern": "^(?:[a-fA-F0-9]{24}|[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})$"
             }
           }
         ]
@@ -2727,7 +2727,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "pattern": "^[a-fA-F0-9]{24}$"
+              "pattern": "^(?:[a-fA-F0-9]{24}|[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})$"
             }
           },
           {
@@ -2736,7 +2736,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "pattern": "^[a-fA-F0-9]{24}$"
+              "pattern": "^(?:[a-fA-F0-9]{24}|[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})$"
             }
           }
         ]
@@ -2950,7 +2950,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "pattern": "^[a-fA-F0-9]{24}$"
+              "pattern": "^(?:[a-fA-F0-9]{24}|[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})$"
             }
           }
         ]
@@ -3043,7 +3043,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "pattern": "^[a-fA-F0-9]{24}$"
+              "pattern": "^(?:[a-fA-F0-9]{24}|[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})$"
             }
           }
         ]
@@ -3989,7 +3989,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "pattern": "^[a-fA-F0-9]{24}$"
+              "pattern": "^(?:[a-fA-F0-9]{24}|[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})$"
             }
           }
         ]
@@ -4302,7 +4302,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "pattern": "^[a-fA-F0-9]{24}$"
+              "pattern": "^(?:[a-fA-F0-9]{24}|[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})$"
             }
           }
         ],
@@ -4417,7 +4417,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "pattern": "^[a-fA-F0-9]{24}$"
+              "pattern": "^(?:[a-fA-F0-9]{24}|[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})$"
             }
           }
         ]
@@ -9576,6 +9576,88 @@
           }
         ]
       }
+    },
+    "/downloads/{id}/audio": {
+      "get": {
+        "summary": "Download authorized audio bytes for offline storage",
+        "operationId": "getDownloadsIdAudio",
+        "tags": [
+          "downloads"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^(?:[a-fA-F0-9]{24}|[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})$"
+            }
+          },
+          {
+            "in": "query",
+            "name": "device",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^(?:[a-fA-F0-9]{24}|[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authenticated audio byte stream",
+            "content": {
+              "audio/mpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Entitlement, device, plan, or rights check failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Entitlement unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Audio quality unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -10131,11 +10213,11 @@
         "properties": {
           "song": {
             "type": "string",
-            "pattern": "^[a-fA-F0-9]{24}$"
+            "pattern": "^(?:[a-fA-F0-9]{24}|[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})$"
           },
           "device": {
             "type": "string",
-            "pattern": "^[a-fA-F0-9]{24}$"
+            "pattern": "^(?:[a-fA-F0-9]{24}|[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})$"
           },
           "quality": {
             "type": "string",
