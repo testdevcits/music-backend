@@ -2,6 +2,7 @@ import { RequestHandler } from 'express';
 import { z } from 'zod';
 import { id, quality, songId } from '../../shared/validation';
 import { streamFile } from '../../infrastructure/media';
+import { requestCountry } from '../../shared/request-country';
 import { recordEvent, stream, streamingFile } from './service';
 export const postStreamingSongId: RequestHandler = async (req, res) => {
   const input = z
@@ -10,7 +11,7 @@ export const postStreamingSongId: RequestHandler = async (req, res) => {
     .parse(req.body);
   res
     .set('Cache-Control', 'no-store')
-    .json(await stream(req.auth.userId, songId.parse(req.params.songId), input.quality));
+    .json(await stream(req.auth.userId, songId.parse(req.params.songId), input.quality, requestCountry(req)));
 };
 export const postStreamingSessionsIdEvents: RequestHandler = async (req, res) => {
   const input = z
@@ -24,7 +25,7 @@ export const postStreamingSessionsIdEvents: RequestHandler = async (req, res) =>
   res.status(201).json(await recordEvent(req.auth.userId, id.parse(req.params.id), input));
 };
 export const getStreamingSessionsIdAudio: RequestHandler = async (req, res) => {
-  const media = await streamingFile(req.auth.userId, id.parse(req.params.id));
+  const media = await streamingFile(req.auth.userId, id.parse(req.params.id), requestCountry(req));
   if (media.url) {
     res.redirect(302, media.url);
     return;

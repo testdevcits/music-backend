@@ -6,8 +6,8 @@ import { ListeningEvent, PlaybackSession } from './models';
 export function allowedListeningDelta(state: string, elapsed: number, claimed: number) {
   return ['play', 'heartbeat'].includes(state) ? Math.min(claimed, Math.max(0, elapsed), 60) : 0;
 }
-export async function stream(user: string, songId: string, quality: string) {
-  const { song, license }: any = await availableSong(songId);
+export async function stream(user: string, songId: string, quality: string, country?: string) {
+  const { song, license }: any = await availableSong(songId, false, country);
   const p: any = await policy(user);
   const preferredQuality = (p.qualities ?? []).includes(quality) ? quality : (p.qualities ?? [])[0];
   ensure(preferredQuality, 403, 'PLAN_RESTRICTED');
@@ -29,14 +29,14 @@ export async function stream(user: string, songId: string, quality: string) {
     duration: song.duration,
   };
 }
-export async function streamingFile(user: string, sessionId: string) {
+export async function streamingFile(user: string, sessionId: string, country?: string) {
   const session: any = await PlaybackSession.findOne({
     _id: sessionId,
     user,
     expiresAt: { $gt: new Date() },
   });
   ensure(session, 404, 'SESSION_UNAVAILABLE');
-  const { song }: any = await availableSong(String(session.song));
+  const { song }: any = await availableSong(String(session.song), false, country);
   const audio = (song.audio ?? []).find((item: any) => item.quality === session.quality);
   ensure(audio?.fileId || audio?.url, 409, 'QUALITY_UNAVAILABLE');
   return { fileId: audio.fileId, url: audio.url, mime: audio.mime || 'audio/mpeg' };

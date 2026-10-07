@@ -8,7 +8,7 @@ export async function findSong(songId: string, filter: Record<string, unknown> =
   return Song.findOne({ ...identity, ...filter });
 }
 
-export async function availableSong(songId: string, offline = false) {
+export async function availableSong(songId: string, offline = false, country?: string) {
   const song: any = await findSong(songId, { published: true, processing: 'ready' });
   ensure(song, 404, 'SONG_UNAVAILABLE');
   const license: any = await License.findOne({
@@ -17,11 +17,19 @@ export async function availableSong(songId: string, offline = false) {
     startsAt: { $lte: new Date() },
     endsAt: { $gt: new Date() },
     streaming: true,
+    verificationStatus: 'verified',
+    inAppStreaming: true,
+    audioHosting: true,
+    commercialUse: true,
     ...(offline ? { offline: true } : {}),
   });
   ensure(license, 403, 'LICENSE_UNAVAILABLE');
-  // Fail closed for territorial licenses until a trusted edge geolocation integration is configured.
-  ensure((license.territories ?? []).length === 0, 403, 'TERRITORY_VERIFICATION_REQUIRED');
+  const territories: string[] = license.territories ?? [];
+  ensure(
+    territories.length === 0 || Boolean(country && territories.includes(country)),
+    403,
+    country ? 'LICENSE_NOT_AVAILABLE_IN_COUNTRY' : 'TERRITORY_VERIFICATION_REQUIRED',
+  );
   return { song, license };
 }
 export async function songView(song: any) {

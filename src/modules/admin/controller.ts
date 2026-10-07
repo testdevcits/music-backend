@@ -189,10 +189,13 @@ export const patchUsersId: RequestHandler = async (req, res) => {
 export const putLicensesSongId: RequestHandler = async (req, res) => {
   const input = validators.licenseInput.parse({ ...req.body, song: id.parse(req.params.songId) });
   ensure(await Song.exists({ _id: input.song }), 404, 'NOT_FOUND');
+  const verification = input.verificationStatus === 'verified'
+    ? { verifiedBy: req.auth.userId, verifiedAt: new Date() }
+    : { verifiedBy: undefined, verifiedAt: undefined };
   res.json(
     await License.findOneAndUpdate(
       { song: input.song },
-      { $set: input },
+      { $set: { ...input, ...verification } },
       { upsert: true, new: true, runValidators: true },
     ),
   );
@@ -251,6 +254,11 @@ export const postSongsIdPublish: RequestHandler = async (req, res) => {
       streaming: true,
       startsAt: { $lte: new Date() },
       endsAt: { $gt: new Date() },
+      verificationStatus: 'verified',
+      inAppStreaming: true,
+      audioHosting: true,
+      commercialUse: true,
+      $or: [{ evidenceUrl: { $exists: true, $ne: '' } }, { documentReference: { $exists: true, $ne: '' } }],
     });
     ensure(license, 409, 'LICENSE_REQUIRED');
   }

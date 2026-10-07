@@ -87,6 +87,7 @@ adminRoutes.post('/import', async (req, res) => {
       category: z.union([z.string().trim().max(100), z.array(z.string().trim().max(100))]).optional(),
       lyrics: z.string().max(50000).optional(),
       sourceLicense: z.string().trim().max(500).optional(),
+      sourceUrl: z.string().url().max(2000).optional(),
     })
     .strict()
     .parse(req.body);

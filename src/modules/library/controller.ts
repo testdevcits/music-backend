@@ -6,9 +6,11 @@ import { streamBucketFile, streamFile } from '../../infrastructure/media';
 import { id, name, page, publicOrMongoId, quality } from '../../shared/validation';
 import { User } from '../auth/models';
 import { Song } from '../catalog/models';
+import { songView } from '../catalog/service';
 import { ListeningEvent } from '../playback/models';
 import { Device, Download, Favorite, Notification, Playlist } from './models';
 import * as service from './service';
+import { requestCountry } from '../../shared/request-country';
 import { hasCloudinaryConfig, uploadProfileImageToCloudinary } from '../../infrastructure/cloudinary';
 
 async function migrateLegacyProfileImage(user: any) {
@@ -157,19 +159,29 @@ export const patchUsersMe: RequestHandler = async (req, res) => {
 };
 export const getPlaylists: RequestHandler = async (req, res) => {
   const q = page.parse(req.query);
-  res.json({
-    data: await Playlist.find({ owner: req.auth.userId })
+  const [data, total] = await Promise.all([
+    Playlist.find({ owner: req.auth.userId })
       .sort({ createdAt: -1 })
       .skip((q.page - 1) * q.limit)
-      .limit(q.limit),
+      .limit(q.limit)
+      .lean(),
+    Playlist.countDocuments({ owner: req.auth.userId }),
+  ]);
+  res.json({
+    data,
+    page: q.page,
+    limit: q.limit,
+    total,
+    pages: Math.ceil(total / q.limit),
   });
 };
 export const postPlaylists: RequestHandler = async (req, res) => {
   const input = z
-    .object({ name, public: z.boolean().default(false) })
+    .object({ name: name.optional(), public: z.boolean().default(false) })
     .strict()
     .parse(req.body);
-  res.status(201).json(await Playlist.create({ ...input, owner: req.auth.userId }));
+  const playlistName = input.name || `Playlist ${(await Playlist.countDocuments({ owner: req.auth.userId })) + 1}`;
+  res.status(201).json(await Playlist.create({ ...input, name: playlistName, owner: req.auth.userId }));
 };
 export const getPlaylistsId: RequestHandler = async (req, res) => {
   const row = await Playlist.findOne({
@@ -177,7 +189,13 @@ export const getPlaylistsId: RequestHandler = async (req, res) => {
     $or: [{ owner: req.auth.userId }, { public: true }],
   });
   ensure(row, 404, 'NOT_FOUND');
-  res.json(row);
+  const playlistSongs = ((row as any).songs ?? []) as any[];
+  const items = await Song.find({ _id: { $in: playlistSongs }, published: true, processing: 'ready' });
+  const itemsById = new Map(items.map((song: any) => [String(song._id), song]));
+  const populatedItems = playlistSongs
+    .map((songId: any) => itemsById.get(String(songId)))
+    .filter(Boolean);
+  res.json({ ...row.toObject(), items: await Promise.all(populatedItems.map(songView)) });
 };
 export const patchPlaylistsId: RequestHandler = async (req, res) => {
   const input = z
@@ -198,7 +216,7 @@ export const deletePlaylistsId: RequestHandler = async (req, res) => {
 };
 export const putPlaylistsIdSongsSongId: RequestHandler = async (req, res) => {
   const songId = id.parse(req.params.songId);
-  ensure(await Song.exists({ _id: songId, published: true }), 404, 'SONG_UNAVAILABLE');
+  ensure(await Song.exists({ _id: songId, published: true, processing: 'ready' }), 404, 'SONG_UNAVAILABLE');
   const playlist = await Playlist.findOneAndUpdate(
     {
       _id: id.parse(req.params.id),
@@ -274,7 +292,7 @@ export const deleteDevicesId: RequestHandler = async (req, res) => {
 };
 export const postDownloads: RequestHandler = async (req, res) => {
   const input = z.object({ song: id, device: id, quality }).strict().parse(req.body);
-  res.status(201).json(await service.grantDownload(req.auth.userId, input));
+  res.status(201).json(await service.grantDownload(req.auth.userId, input, requestCountry(req)));
 };
 export const getDownloads: RequestHandler = async (req, res) => {
   const q = page.parse(req.query);
@@ -292,11 +310,11 @@ export const postDownloadsIdUrl: RequestHandler = async (req, res) => {
   const { device } = z.object({ device: id }).strict().parse(req.body);
   res
     .set('Cache-Control', 'no-store')
-    .json(await service.downloadUrl(req.auth.userId, id.parse(req.params.id), device));
+    .json(await service.downloadUrl(req.auth.userId, id.parse(req.params.id), device, requestCountry(req)));
 };
 export const getDownloadsIdAudio: RequestHandler = async (req, res) => {
   const device = id.parse(req.query.device);
-  const media = await service.downloadFile(req.auth.userId, id.parse(req.params.id), device);
+  const media = await service.downloadFile(req.auth.userId, id.parse(req.params.id), device, requestCountry(req));
   streamFile(media.fileId, media.mime, res);
 };
 export const deleteDownloadsId: RequestHandler = async (req, res) => {

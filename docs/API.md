@@ -30,26 +30,28 @@ curl -X POST http://localhost:4000/api/v1/auth/register \
 
 | Method | Path                             | Input / behavior                                            |
 | ------ | -------------------------------- | ----------------------------------------------------------- |
-| GET    | `/songs`                         | page, limit, category, tag, artist, album, language filters |
+| GET    | `/songs`                         | page, limit, metadata filters: q, category/categoryId, tag, artist/artistName, album, language, genre, year/fromYear/toYear/decade, sort |
 | GET    | `/songs/:id`                     | Published, processed song metadata and available qualities  |
 | GET    | `/artists`, `/artists/:id`       | Artist metadata                                             |
 | GET    | `/albums`, `/albums/:id`         | Album metadata                                              |
 | GET    | `/categories`, `/categories/:id` | Dynamic category records with parent IDs                    |
 | GET    | `/tags`, `/tags/:id`             | Tags                                                        |
-| GET    | `/search?q=hanuman`              | Published song title/lyrics text search; page/limit         |
+| GET    | `/search?q=hanuman`              | Published song title/lyrics text search plus catalog filters |
 
-Song responses omit audio keys, source keys and processing versions; `coverUrl` is temporary. IDs reference related artists/albums/categories/tags. Catalog visibility is distinct from playback permission: expired or territorial licenses can remain visible in discovery, but streaming/download checks deny access. Text search uses MongoDB's tokenizer without language stemming so song language codes do not become text-index overrides. Advanced transliteration, fuzzy matching and artist search can be added with Atlas Search or a dedicated search engine.
+Song responses omit audio keys, source keys and processing versions; `coverUrl` is temporary. IDs reference related artists/albums/categories/tags. Catalog visibility is distinct from playback permission: expired or territorial licenses can remain visible in discovery, but streaming/download checks deny access. Text search uses MongoDB's tokenizer without language stemming so song language codes do not become text-index overrides. Search accepts artist name, category slug/name, year range or decade, genre and language. Sort values are `recent`, `year-asc`, `year-desc`, `popular`, and `title`. Results include `total` and `pages`.
+
+Example: `GET /songs?artistName=Rib%20hav&category=bhakti&decade=1990&sort=year-asc&page=1&limit=20`. `GET /search?q=chalisa&language=Hindi&category=hanuman-bhajans` combines text search and filters. Use `/categories` and `/artists` to populate filter options.
 
 ## Personal library
 
 | Method      | Path                           | Input / behavior                                               |
 | ----------- | ------------------------------ | -------------------------------------------------------------- |
-| GET, POST   | `/playlists`                   | List owned playlists; create `{name,public?}`                  |
-| GET         | `/playlists/:id`               | Owner or public playlist                                       |
+| GET, POST   | `/playlists`                   | List owned playlists; create `{name?,public?}`; omitted name becomes `Playlist 1`, `Playlist 2`, etc. |
+| GET         | `/playlists/:id`               | Owner or public playlist; includes ordered playable `items` plus song IDs |
 | PATCH       | `/playlists/:id`               | Owner changes `{name?,public?}`                                |
 | DELETE      | `/playlists/:id`               | Owner deletes                                                  |
 | PUT, DELETE | `/playlists/:id/songs/:songId` | Owner adds/removes song; maximum 1,000 entries                 |
-| GET         | `/favorites`                   | Favorite records with song IDs                                 |
+| GET         | `/favorites`                   | Wishlist/favorite records with song IDs                         |
 | PUT, DELETE | `/favorites/:songId`           | Idempotent favorite/unfavorite                                 |
 | GET         | `/history`                     | Newest listening events first, including song ID/type/duration |
 | DELETE      | `/history`                     | Delete the user's listening events                             |
@@ -143,17 +145,19 @@ Create/update bodies:
 - Song: `{title,artist,album?,language,lyrics?,categories:ID[],tags:ID[]}`. Processing state, GridFS file references, and publication cannot be set through generic updates.
 - Playlist: `{owner,name,public,songs:ID[]}`.
 - Plan: `{name,slug,priceMinor,currency,offlineLimit,deviceLimit,offlineDays,qualities,active}`. Quota fields cannot change while active subscriptions use the plan; create a new plan version.
-- License: `{holder,reference?,startsAt,endsAt,streaming,offline,territories:[],enabled}`. Empty territories means globally licensed. Restricted territories currently deny media access pending a trusted location integration.
+- License: `{holder,reference?,startsAt,endsAt,streaming,offline,territories:[],enabled,source,licenseName,evidenceUrl?,documentReference?,inAppStreaming,audioHosting,commercialUse,artworkUse,lyricsUse,verificationStatus,verificationNotes?}`. To set `verificationStatus:"verified"`, include evidence URL or document reference and explicitly enable streaming, in-app playback, audio hosting, and commercial use. Publishing and playback require verified rights evidence. Territory-scoped playback/downloads require the request country to match one of the license's ISO 3166-1 alpha-2 territory codes; Vercel deployments use Vercel's edge country header. In local non-production, send `X-Dev-Country: IN` to simulate India. Missing country denies territory-scoped access; an empty territory list means worldwide only when the actual agreement grants worldwide rights.
 - Subscription: `{plan,startsAt,endsAt,status:"active"|"cancelled",externalReference?}`. Replacement revokes existing downloads and device registrations.
 
 Albums/categories/tags/songs are edited in place rather than hard-deleted to preserve references and listening history. An unused artist can be deleted; artists referenced by a song or album return `ARTIST_IN_USE`. Unpublish songs, disable licenses, or deactivate plans to remove availability.
 
 ### Upload workflow
 
-1. Create artist, optional album/categories/tags, then a song.
+1. Create artist, optional album/categories/tags, then a song. Keep the source page/recording, rights holder, license name, evidence reference, territory, and actual permitted uses documented. Metadata or a downloaded file alone does not establish streaming rights.
 2. POST raw audio bytes to `/admin/songs/:id/uploads` with `Content-Type: audio/wav` and `X-Upload-Kind: audio`. For cover bytes use `Content-Type: image/jpeg`, `image/png`, or `image/webp` with `X-Upload-Kind: cover`. Audio accepts MP3/WAV/FLAC/MP4; the configured maximum is 200 MiB, covers maximum 10 MiB.
 3. The API writes the incoming file to MongoDB GridFS and immediately returns `{status:"queued",jobId}` with 202.
 4. Poll `/admin/jobs/:jobId`. Worker validates media and generates 64/128/192 kbps MP3s or a normalized JPEG cover in GridFS. Failed jobs retry with exponential backoff. Reprocessing audio unpublishes the song and requires publishing again.
-5. Add a license, then POST `/admin/songs/:id/publish` with `{published:true}`.
+5. Add a license with evidence and the applicable in-app streaming/audio-hosting/commercial permissions. Only mark it verified after reviewing the actual agreement. Then POST `/admin/songs/:id/publish` with `{published:true}`.
+
+For sample devotional categories/tags, run `DEVOTIONAL_CATALOG_SEED_CONFIRM=YES npm run seed:devotional-catalog`. It idempotently creates Bhakti subcategories and tags and attaches them to an existing Hanuman Chalisa record if found. It does not create a fake audio track, grant a license, or change audio/publication status.
 
 Covers attach to songs in this upload flow. Artist and album image support is a future targeted GridFS workflow.

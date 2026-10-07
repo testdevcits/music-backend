@@ -36,8 +36,9 @@ export async function revokeDevice(user: string, device: string) {
 export async function grantDownload(
   user: string,
   input: { song: string; device: string; quality: string },
+  country?: string,
 ) {
-  const { song, license }: any = await availableSong(input.song, true);
+  const { song, license }: any = await availableSong(input.song, true, country);
   ensure(
     (song.audio ?? []).some((a: any) => a.quality === input.quality),
     409,
@@ -78,7 +79,7 @@ export async function grantDownload(
     );
   });
 }
-export async function downloadUrl(user: string, downloadId: string, deviceId: string) {
+export async function downloadUrl(user: string, downloadId: string, deviceId: string, country?: string) {
   const grant: any = await Download.findOne({
     _id: downloadId,
     user,
@@ -91,7 +92,7 @@ export async function downloadUrl(user: string, downloadId: string, deviceId: st
   ensure(device, 403, 'DEVICE_UNAVAILABLE');
   const p: any = await policy(user);
   ensure((p.offlineLimit ?? 0) > 0 && (p.qualities ?? []).includes(grant.quality!), 403, 'PLAN_RESTRICTED');
-  const { song }: any = await availableSong(String(grant.song), true);
+  const { song }: any = await availableSong(String(grant.song), true, country);
   const audio = (song.audio ?? []).find((a: any) => a.quality === grant.quality);
   ensure(audio?.fileId, 409, 'QUALITY_UNAVAILABLE');
   return {
@@ -102,8 +103,8 @@ export async function downloadUrl(user: string, downloadId: string, deviceId: st
     protection: { mode: 'client-encrypted-storage', requiresSecureKeystore: true },
   };
 }
-export async function downloadFile(user: string, downloadId: string, deviceId: string) {
-  await downloadUrl(user, downloadId, deviceId);
+export async function downloadFile(user: string, downloadId: string, deviceId: string, country?: string) {
+  await downloadUrl(user, downloadId, deviceId, country);
   const grant: any = await Download.findById(downloadId);
   const song: any = await Song.findById(grant!.song);
   const audio = (song.audio ?? []).find((item: any) => item.quality === grant!.quality);

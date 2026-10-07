@@ -20,7 +20,9 @@
       "post": {
         "summary": "Register",
         "operationId": "postAuthRegister",
-        "tags": ["auth"],
+        "tags": [
+          "auth"
+        ],
         "responses": {
           "201": {
             "description": "Success",
@@ -120,7 +122,9 @@
       "post": {
         "summary": "Login",
         "operationId": "postAuthLogin",
-        "tags": ["auth"],
+        "tags": [
+          "auth"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -220,7 +224,9 @@
       "post": {
         "summary": "Refresh",
         "operationId": "postAuthRefresh",
-        "tags": ["auth"],
+        "tags": [
+          "auth"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -320,7 +326,9 @@
       "post": {
         "summary": "Logout",
         "operationId": "postAuthLogout",
-        "tags": ["auth"],
+        "tags": [
+          "auth"
+        ],
         "responses": {
           "204": {
             "description": "Success"
@@ -413,7 +421,9 @@
       "get": {
         "summary": "Current profile",
         "operationId": "getUsersMe",
-        "tags": ["users"],
+        "tags": [
+          "users"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -500,7 +510,9 @@
       "patch": {
         "summary": "Update profile",
         "operationId": "patchUsersMe",
-        "tags": ["users"],
+        "tags": [
+          "users"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -594,7 +606,9 @@
                     "type": "string"
                   }
                 },
-                "required": ["name"],
+                "required": [
+                  "name"
+                ],
                 "additionalProperties": false
               }
             }
@@ -606,7 +620,9 @@
       "get": {
         "summary": "List songs",
         "operationId": "getSongs",
-        "tags": ["songs"],
+        "tags": [
+          "songs"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -747,6 +763,84 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "categoryId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "artistName",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "genre",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "year",
+            "schema": {
+              "type": "integer",
+              "minimum": 1900,
+              "maximum": 2100
+            }
+          },
+          {
+            "in": "query",
+            "name": "fromYear",
+            "schema": {
+              "type": "integer",
+              "minimum": 1900,
+              "maximum": 2100
+            }
+          },
+          {
+            "in": "query",
+            "name": "toYear",
+            "schema": {
+              "type": "integer",
+              "minimum": 1900,
+              "maximum": 2100
+            }
+          },
+          {
+            "in": "query",
+            "name": "decade",
+            "schema": {
+              "type": "integer",
+              "minimum": 1900,
+              "maximum": 2090
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "recent",
+                "year-asc",
+                "year-desc",
+                "popular",
+                "title"
+              ]
+            }
           }
         ]
       }
@@ -755,7 +849,9 @@
       "get": {
         "summary": "Read songs",
         "operationId": "getSongsId",
-        "tags": ["songs"],
+        "tags": [
+          "songs"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -855,7 +951,9 @@
       "get": {
         "summary": "List artists",
         "operationId": "getArtists",
-        "tags": ["artists"],
+        "tags": [
+          "artists"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -965,7 +1063,9 @@
       "get": {
         "summary": "Read artists",
         "operationId": "getArtistsId",
-        "tags": ["artists"],
+        "tags": [
+          "artists"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -1065,7 +1165,9 @@
       "get": {
         "summary": "List albums",
         "operationId": "getAlbums",
-        "tags": ["albums"],
+        "tags": [
+          "albums"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -1175,7 +1277,9 @@
       "get": {
         "summary": "Read albums",
         "operationId": "getAlbumsId",
-        "tags": ["albums"],
+        "tags": [
+          "albums"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -1275,7 +1379,9 @@
       "get": {
         "summary": "List categories",
         "operationId": "getCategories",
-        "tags": ["categories"],
+        "tags": [
+          "categories"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -1385,7 +1491,9 @@
       "get": {
         "summary": "Read categories",
         "operationId": "getCategoriesId",
-        "tags": ["categories"],
+        "tags": [
+          "categories"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -1485,7 +1593,9 @@
       "get": {
         "summary": "List tags",
         "operationId": "getTags",
-        "tags": ["tags"],
+        "tags": [
+          "tags"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -1595,7 +1705,9 @@
       "get": {
         "summary": "Read tags",
         "operationId": "getTagsId",
-        "tags": ["tags"],
+        "tags": [
+          "tags"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -1695,7 +1807,9 @@
       "get": {
         "summary": "Search song titles and lyrics",
         "operationId": "getSearch",
-        "tags": ["search"],
+        "tags": [
+          "search"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -1807,6 +1921,84 @@
               "minLength": 2,
               "maxLength": 100
             }
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "categoryId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "artistName",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "genre",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "year",
+            "schema": {
+              "type": "integer",
+              "minimum": 1900,
+              "maximum": 2100
+            }
+          },
+          {
+            "in": "query",
+            "name": "fromYear",
+            "schema": {
+              "type": "integer",
+              "minimum": 1900,
+              "maximum": 2100
+            }
+          },
+          {
+            "in": "query",
+            "name": "toYear",
+            "schema": {
+              "type": "integer",
+              "minimum": 1900,
+              "maximum": 2100
+            }
+          },
+          {
+            "in": "query",
+            "name": "decade",
+            "schema": {
+              "type": "integer",
+              "minimum": 1900,
+              "maximum": 2090
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "recent",
+                "year-asc",
+                "year-desc",
+                "popular",
+                "title"
+              ]
+            }
           }
         ]
       }
@@ -1815,7 +2007,9 @@
       "get": {
         "summary": "List owned playlists",
         "operationId": "getPlaylists",
-        "tags": ["playlists"],
+        "tags": [
+          "playlists"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -1923,7 +2117,9 @@
       "post": {
         "summary": "Create playlist",
         "operationId": "postPlaylists",
-        "tags": ["playlists"],
+        "tags": [
+          "playlists"
+        ],
         "responses": {
           "201": {
             "description": "Success",
@@ -2022,7 +2218,9 @@
       "get": {
         "summary": "Read owned or public playlist",
         "operationId": "getPlaylistsId",
-        "tags": ["playlists"],
+        "tags": [
+          "playlists"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -2120,7 +2318,9 @@
       "patch": {
         "summary": "Edit owned playlist",
         "operationId": "patchPlaylistsId",
-        "tags": ["playlists"],
+        "tags": [
+          "playlists"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -2238,7 +2438,9 @@
       "delete": {
         "summary": "Delete owned playlist",
         "operationId": "deletePlaylistsId",
-        "tags": ["playlists"],
+        "tags": [
+          "playlists"
+        ],
         "responses": {
           "204": {
             "description": "Success"
@@ -2331,7 +2533,9 @@
       "put": {
         "summary": "Change playlist membership",
         "operationId": "putPlaylistsIdSongsSongid",
-        "tags": ["playlists"],
+        "tags": [
+          "playlists"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -2438,7 +2642,9 @@
       "delete": {
         "summary": "Change playlist membership",
         "operationId": "deletePlaylistsIdSongsSongid",
-        "tags": ["playlists"],
+        "tags": [
+          "playlists"
+        ],
         "responses": {
           "204": {
             "description": "Success"
@@ -2540,7 +2746,9 @@
       "get": {
         "summary": "List favorites",
         "operationId": "getFavorites",
-        "tags": ["favorites"],
+        "tags": [
+          "favorites"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -2650,7 +2858,9 @@
       "put": {
         "summary": "Change favorite",
         "operationId": "putFavoritesSongid",
-        "tags": ["favorites"],
+        "tags": [
+          "favorites"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -2748,7 +2958,9 @@
       "delete": {
         "summary": "Change favorite",
         "operationId": "deleteFavoritesSongid",
-        "tags": ["favorites"],
+        "tags": [
+          "favorites"
+        ],
         "responses": {
           "204": {
             "description": "Success"
@@ -2841,7 +3053,9 @@
       "get": {
         "summary": "Listening history",
         "operationId": "getHistory",
-        "tags": ["history"],
+        "tags": [
+          "history"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -2949,7 +3163,9 @@
       "delete": {
         "summary": "Clear history",
         "operationId": "deleteHistory",
-        "tags": ["history"],
+        "tags": [
+          "history"
+        ],
         "responses": {
           "204": {
             "description": "Success"
@@ -3031,7 +3247,9 @@
       "get": {
         "summary": "Read notification inbox",
         "operationId": "getNotifications",
-        "tags": ["notifications"],
+        "tags": [
+          "notifications"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -3149,7 +3367,9 @@
       "get": {
         "summary": "Get unread notification count",
         "operationId": "getNotificationsUnreadCount",
-        "tags": ["notifications"],
+        "tags": [
+          "notifications"
+        ],
         "responses": {
           "200": {
             "description": "Unread notification count"
@@ -3161,7 +3381,9 @@
       "patch": {
         "summary": "Mark all notifications read",
         "operationId": "patchNotificationsReadAll",
-        "tags": ["notifications"],
+        "tags": [
+          "notifications"
+        ],
         "responses": {
           "200": {
             "description": "Number of notifications marked read"
@@ -3173,7 +3395,9 @@
       "patch": {
         "summary": "Mark notification read",
         "operationId": "patchNotificationsIdRead",
-        "tags": ["notifications"],
+        "tags": [
+          "notifications"
+        ],
         "responses": {
           "204": {
             "description": "Success"
@@ -3266,7 +3490,9 @@
       "post": {
         "summary": "Create authenticated stream session",
         "operationId": "postStreamingSongid",
-        "tags": ["streaming"],
+        "tags": [
+          "streaming"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -3376,7 +3602,9 @@
       "post": {
         "summary": "Record ordered playback event",
         "operationId": "postStreamingSessionsIdEvents",
-        "tags": ["streaming"],
+        "tags": [
+          "streaming"
+        ],
         "responses": {
           "201": {
             "description": "Success",
@@ -3486,7 +3714,9 @@
       "post": {
         "summary": "Register device",
         "operationId": "postDevices",
-        "tags": ["devices"],
+        "tags": [
+          "devices"
+        ],
         "responses": {
           "201": {
             "description": "Success",
@@ -3583,7 +3813,9 @@
       "get": {
         "summary": "List devices",
         "operationId": "getDevices",
-        "tags": ["devices"],
+        "tags": [
+          "devices"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -3672,7 +3904,9 @@
       "delete": {
         "summary": "Revoke device and downloads",
         "operationId": "deleteDevicesId",
-        "tags": ["devices"],
+        "tags": [
+          "devices"
+        ],
         "responses": {
           "204": {
             "description": "Success"
@@ -3765,7 +3999,9 @@
       "post": {
         "summary": "Create or renew entitlement",
         "operationId": "postDownloads",
-        "tags": ["downloads"],
+        "tags": [
+          "downloads"
+        ],
         "responses": {
           "201": {
             "description": "Success",
@@ -3862,7 +4098,9 @@
       "get": {
         "summary": "List active entitlements",
         "operationId": "getDownloads",
-        "tags": ["downloads"],
+        "tags": [
+          "downloads"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -3972,7 +4210,9 @@
       "post": {
         "summary": "Get authenticated download media path",
         "operationId": "postDownloadsIdUrl",
-        "tags": ["downloads"],
+        "tags": [
+          "downloads"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -4078,7 +4318,9 @@
                     "pattern": "^[a-fA-F0-9]{24}$"
                   }
                 },
-                "required": ["device"],
+                "required": [
+                  "device"
+                ],
                 "additionalProperties": false
               }
             }
@@ -4090,7 +4332,9 @@
       "delete": {
         "summary": "Revoke entitlement",
         "operationId": "deleteDownloadsId",
-        "tags": ["downloads"],
+        "tags": [
+          "downloads"
+        ],
         "responses": {
           "204": {
             "description": "Success"
@@ -4183,7 +4427,9 @@
       "get": {
         "summary": "List active plans",
         "operationId": "getSubscriptionsPlans",
-        "tags": ["subscriptions"],
+        "tags": [
+          "subscriptions"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -4272,7 +4518,9 @@
       "get": {
         "summary": "Read subscription and effective policy",
         "operationId": "getSubscriptionsMe",
-        "tags": ["subscriptions"],
+        "tags": [
+          "subscriptions"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -4361,7 +4609,9 @@
       "post": {
         "summary": "Cancel immediately and revoke offline access",
         "operationId": "postSubscriptionsCancel",
-        "tags": ["subscriptions"],
+        "tags": [
+          "subscriptions"
+        ],
         "responses": {
           "204": {
             "description": "Success"
@@ -4443,7 +4693,9 @@
       "get": {
         "summary": "Admin list artists",
         "operationId": "getAdminArtists",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -4552,7 +4804,9 @@
       "post": {
         "summary": "Create artists",
         "operationId": "postAdminArtists",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "201": {
             "description": "Success",
@@ -4652,7 +4906,9 @@
       "get": {
         "summary": "Admin read artists",
         "operationId": "getAdminArtistsId",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -4751,7 +5007,9 @@
       "patch": {
         "summary": "Update artists",
         "operationId": "patchAdminArtistsId",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -4870,7 +5128,9 @@
       "delete": {
         "summary": "Delete artists",
         "operationId": "deleteAdminArtistsId",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "204": {
             "description": "Deleted"
@@ -4964,7 +5224,9 @@
       "get": {
         "summary": "List configured import providers",
         "operationId": "getAdminImportProviders",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -4978,11 +5240,27 @@
                       "items": {
                         "type": "object",
                         "properties": {
-                          "name": { "type": "string" },
-                          "baseUrl": { "type": ["string", "null"] },
-                          "allowAudio": { "type": "boolean" },
-                          "allowImages": { "type": "boolean" },
-                          "permittedFields": { "type": "array", "items": { "type": "string" } }
+                          "name": {
+                            "type": "string"
+                          },
+                          "baseUrl": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "allowAudio": {
+                            "type": "boolean"
+                          },
+                          "allowImages": {
+                            "type": "boolean"
+                          },
+                          "permittedFields": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          }
                         }
                       }
                     }
@@ -4999,7 +5277,9 @@
       "get": {
         "summary": "Search provider catalog",
         "operationId": "getAdminImportSearch",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -5010,7 +5290,9 @@
                   "properties": {
                     "data": {
                       "type": "array",
-                      "items": { "type": "object" }
+                      "items": {
+                        "type": "object"
+                      }
                     }
                   }
                 }
@@ -5047,7 +5329,9 @@
       "post": {
         "summary": "Import a draft song from a provider",
         "operationId": "postAdminImport",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "201": {
             "description": "Created",
@@ -5068,21 +5352,57 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "provider": { "type": "string" },
-                  "externalSongId": { "type": "string" },
-                  "title": { "type": "string" },
-                  "artist": { "type": "string" },
-                  "album": { "type": "string" },
-                  "genre": { "type": "string" },
-                  "year": { "type": "integer" },
-                  "duration": { "type": "integer" },
-                  "artwork": { "type": "string", "format": "uri" },
-                  "coverUrl": { "type": "string", "format": "uri" },
-                  "url": { "type": "string", "format": "uri" },
-                  "category": { "type": ["string", "array"] },
-                  "lyrics": { "type": "string" }
+                  "provider": {
+                    "type": "string"
+                  },
+                  "externalSongId": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "artist": {
+                    "type": "string"
+                  },
+                  "album": {
+                    "type": "string"
+                  },
+                  "genre": {
+                    "type": "string"
+                  },
+                  "year": {
+                    "type": "integer"
+                  },
+                  "duration": {
+                    "type": "integer"
+                  },
+                  "artwork": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "coverUrl": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "url": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "category": {
+                    "type": [
+                      "string",
+                      "array"
+                    ]
+                  },
+                  "lyrics": {
+                    "type": "string"
+                  }
                 },
-                "required": ["provider", "externalSongId", "title"],
+                "required": [
+                  "provider",
+                  "externalSongId",
+                  "title"
+                ],
                 "additionalProperties": true
               }
             }
@@ -5094,7 +5414,9 @@
       "get": {
         "summary": "Admin list albums",
         "operationId": "getAdminAlbums",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -5203,7 +5525,9 @@
       "post": {
         "summary": "Create albums",
         "operationId": "postAdminAlbums",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "201": {
             "description": "Success",
@@ -5303,7 +5627,9 @@
       "get": {
         "summary": "Admin read albums",
         "operationId": "getAdminAlbumsId",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -5402,7 +5728,9 @@
       "patch": {
         "summary": "Update albums",
         "operationId": "patchAdminAlbumsId",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -5528,7 +5856,9 @@
       "get": {
         "summary": "Admin list categories",
         "operationId": "getAdminCategories",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -5637,7 +5967,9 @@
       "post": {
         "summary": "Create categories",
         "operationId": "postAdminCategories",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "201": {
             "description": "Success",
@@ -5737,7 +6069,9 @@
       "get": {
         "summary": "Admin read categories",
         "operationId": "getAdminCategoriesId",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -5836,7 +6170,9 @@
       "patch": {
         "summary": "Update categories",
         "operationId": "patchAdminCategoriesId",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -5957,7 +6293,9 @@
       "get": {
         "summary": "Admin list tags",
         "operationId": "getAdminTags",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -6066,7 +6404,9 @@
       "post": {
         "summary": "Create tags",
         "operationId": "postAdminTags",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "201": {
             "description": "Success",
@@ -6166,7 +6506,9 @@
       "get": {
         "summary": "Admin read tags",
         "operationId": "getAdminTagsId",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -6265,7 +6607,9 @@
       "patch": {
         "summary": "Update tags",
         "operationId": "patchAdminTagsId",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -6386,7 +6730,9 @@
       "get": {
         "summary": "Admin list songs",
         "operationId": "getAdminSongs",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -6495,7 +6841,9 @@
       "post": {
         "summary": "Create songs",
         "operationId": "postAdminSongs",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "201": {
             "description": "Success",
@@ -6595,7 +6943,9 @@
       "get": {
         "summary": "Admin read songs",
         "operationId": "getAdminSongsId",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -6694,7 +7044,9 @@
       "patch": {
         "summary": "Update songs",
         "operationId": "patchAdminSongsId",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -6840,7 +7192,9 @@
       "get": {
         "summary": "Admin list plans",
         "operationId": "getAdminPlans",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -6949,7 +7303,9 @@
       "post": {
         "summary": "Create plans",
         "operationId": "postAdminPlans",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "201": {
             "description": "Success",
@@ -7049,7 +7405,9 @@
       "get": {
         "summary": "Admin read plans",
         "operationId": "getAdminPlansId",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -7148,7 +7506,9 @@
       "patch": {
         "summary": "Update plans",
         "operationId": "patchAdminPlansId",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -7282,7 +7642,11 @@
                     "type": "array",
                     "items": {
                       "type": "string",
-                      "enum": ["64", "128", "192"]
+                      "enum": [
+                        "64",
+                        "128",
+                        "192"
+                      ]
                     }
                   },
                   "active": {
@@ -7301,7 +7665,9 @@
       "get": {
         "summary": "Admin list playlists",
         "operationId": "getAdminPlaylists",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -7410,7 +7776,9 @@
       "post": {
         "summary": "Create playlists",
         "operationId": "postAdminPlaylists",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "201": {
             "description": "Success",
@@ -7510,7 +7878,9 @@
       "get": {
         "summary": "Admin read playlists",
         "operationId": "getAdminPlaylistsId",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -7609,7 +7979,9 @@
       "patch": {
         "summary": "Update playlists",
         "operationId": "patchAdminPlaylistsId",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -7739,7 +8111,9 @@
       "delete": {
         "summary": "Admin delete playlist",
         "operationId": "deleteAdminPlaylistsId",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "204": {
             "description": "Success"
@@ -7833,7 +8207,9 @@
       "get": {
         "summary": "List users",
         "operationId": "getAdminUsers",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -7944,8 +8320,13 @@
       "patch": {
         "summary": "Update or disable user",
         "operationId": "patchAdminUsersId",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
+          "204": {
+            "description": "Updated"
+          },
           "400": {
             "description": "Invalid request",
             "content": {
@@ -8015,9 +8396,6 @@
                 }
               }
             }
-          },
-          "204": {
-            "description": "Updated"
           }
         },
         "description": "Requires an administrator role.",
@@ -8058,7 +8436,9 @@
       "get": {
         "summary": "List licenses",
         "operationId": "getAdminLicenses",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -8169,7 +8549,9 @@
       "put": {
         "summary": "Set music license",
         "operationId": "putAdminLicensesSongid",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -8280,7 +8662,9 @@
       "post": {
         "summary": "Publish or unpublish song",
         "operationId": "postAdminSongsIdPublish",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -8386,7 +8770,9 @@
                     "type": "boolean"
                   }
                 },
-                "required": ["published"],
+                "required": [
+                  "published"
+                ],
                 "additionalProperties": false
               }
             }
@@ -8398,7 +8784,9 @@
       "post": {
         "summary": "Store media in GridFS and queue processing",
         "operationId": "postAdminSongsIdUploads",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "202": {
             "description": "Success",
@@ -8546,7 +8934,9 @@
       "post": {
         "summary": "Queue media processing",
         "operationId": "postAdminUploadsIdComplete",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "202": {
             "description": "Success",
@@ -8647,7 +9037,9 @@
       "get": {
         "summary": "Read processing job",
         "operationId": "getAdminJobsId",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -8748,7 +9140,9 @@
       "post": {
         "summary": "Retry failed job",
         "operationId": "postAdminJobsIdRetry",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "202": {
             "description": "Success"
@@ -8842,7 +9236,9 @@
       "get": {
         "summary": "List subscriptions",
         "operationId": "getAdminSubscriptions",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -8953,7 +9349,9 @@
       "put": {
         "summary": "Assign or revoke subscription",
         "operationId": "putAdminSubscriptionsUserid",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -9064,7 +9462,9 @@
       "get": {
         "summary": "List all notifications across users",
         "operationId": "getAdminNotifications",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "200": {
             "description": "Paginated notification list with recipient and read state"
@@ -9077,7 +9477,9 @@
       "get": {
         "summary": "Top songs by observed listening seconds",
         "operationId": "getAdminAnalytics",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -9201,11 +9603,15 @@
                 "type": "object"
               }
             },
-            "required": ["code"],
+            "required": [
+              "code"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "additionalProperties": false
       },
       "Credentials": {
@@ -9221,7 +9627,10 @@
             "maxLength": 72
           }
         },
-        "required": ["email", "password"],
+        "required": [
+          "email",
+          "password"
+        ],
         "additionalProperties": false
       },
       "Register": {
@@ -9240,7 +9649,11 @@
             "type": "string"
           }
         },
-        "required": ["email", "password", "name"],
+        "required": [
+          "email",
+          "password",
+          "name"
+        ],
         "additionalProperties": false
       },
       "Refresh": {
@@ -9250,7 +9663,9 @@
             "type": "string"
           }
         },
-        "required": ["refreshToken"],
+        "required": [
+          "refreshToken"
+        ],
         "additionalProperties": false
       },
       "Tokens": {
@@ -9266,7 +9681,11 @@
             "type": "integer"
           }
         },
-        "required": ["accessToken", "refreshToken", "expiresIn"],
+        "required": [
+          "accessToken",
+          "refreshToken",
+          "expiresIn"
+        ],
         "additionalProperties": false
       },
       "ArtistInput": {
@@ -9279,7 +9698,9 @@
             "type": "string"
           }
         },
-        "required": ["name"],
+        "required": [
+          "name"
+        ],
         "additionalProperties": false
       },
       "AlbumInput": {
@@ -9297,7 +9718,10 @@
             "format": "date-time"
           }
         },
-        "required": ["title", "artist"],
+        "required": [
+          "title",
+          "artist"
+        ],
         "additionalProperties": false
       },
       "CategoryInput": {
@@ -9315,7 +9739,10 @@
             "nullable": true
           }
         },
-        "required": ["name", "slug"],
+        "required": [
+          "name",
+          "slug"
+        ],
         "additionalProperties": false
       },
       "TagInput": {
@@ -9328,7 +9755,10 @@
             "type": "string"
           }
         },
-        "required": ["name", "slug"],
+        "required": [
+          "name",
+          "slug"
+        ],
         "additionalProperties": false
       },
       "SongInput": {
@@ -9364,9 +9794,33 @@
               "type": "string",
               "pattern": "^[a-fA-F0-9]{24}$"
             }
+          },
+          "duration": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "genre": {
+            "type": "string"
+          },
+          "year": {
+            "type": "integer"
+          },
+          "sourceUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "sourceLicense": {
+            "type": "string"
+          },
+          "rightsHolder": {
+            "type": "string"
           }
         },
-        "required": ["title", "artist", "language"],
+        "required": [
+          "title",
+          "artist",
+          "language"
+        ],
         "additionalProperties": false
       },
       "PlanInput": {
@@ -9404,7 +9858,11 @@
             "type": "array",
             "items": {
               "type": "string",
-              "enum": ["64", "128", "192"]
+              "enum": [
+                "64",
+                "128",
+                "192"
+              ]
             }
           },
           "active": {
@@ -9444,7 +9902,12 @@
             }
           }
         },
-        "required": ["owner", "name", "public", "songs"],
+        "required": [
+          "owner",
+          "name",
+          "public",
+          "songs"
+        ],
         "additionalProperties": false
       },
       "PlaylistInput": {
@@ -9457,7 +9920,6 @@
             "type": "boolean"
           }
         },
-        "required": ["name"],
         "additionalProperties": false
       },
       "LicenseInput": {
@@ -9492,9 +9954,62 @@
           },
           "enabled": {
             "type": "boolean"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "artist",
+              "label",
+              "provider",
+              "public-domain",
+              "creative-commons",
+              "other"
+            ]
+          },
+          "licenseName": {
+            "type": "string"
+          },
+          "evidenceUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "documentReference": {
+            "type": "string"
+          },
+          "inAppStreaming": {
+            "type": "boolean"
+          },
+          "audioHosting": {
+            "type": "boolean"
+          },
+          "commercialUse": {
+            "type": "boolean"
+          },
+          "artworkUse": {
+            "type": "boolean"
+          },
+          "lyricsUse": {
+            "type": "boolean"
+          },
+          "verificationStatus": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "verified",
+              "rejected"
+            ]
+          },
+          "verificationNotes": {
+            "type": "string"
           }
         },
-        "required": ["holder", "startsAt", "endsAt", "streaming", "offline"],
+        "required": [
+          "holder",
+          "startsAt",
+          "endsAt",
+          "streaming",
+          "offline"
+        ],
         "additionalProperties": false
       },
       "SubscriptionInput": {
@@ -9514,13 +10029,21 @@
           },
           "status": {
             "type": "string",
-            "enum": ["active", "cancelled"]
+            "enum": [
+              "active",
+              "cancelled"
+            ]
           },
           "externalReference": {
             "type": "string"
           }
         },
-        "required": ["plan", "startsAt", "endsAt", "status"],
+        "required": [
+          "plan",
+          "startsAt",
+          "endsAt",
+          "status"
+        ],
         "additionalProperties": false
       },
       "UploadInput": {
@@ -9528,7 +10051,10 @@
         "properties": {
           "kind": {
             "type": "string",
-            "enum": ["audio", "cover"]
+            "enum": [
+              "audio",
+              "cover"
+            ]
           },
           "contentType": {
             "type": "string"
@@ -9538,7 +10064,11 @@
             "minimum": 1
           }
         },
-        "required": ["kind", "contentType", "bytes"],
+        "required": [
+          "kind",
+          "contentType",
+          "bytes"
+        ],
         "additionalProperties": false
       },
       "UploadGrant": {
@@ -9562,7 +10092,12 @@
             }
           }
         },
-        "required": ["uploadId", "url", "expiresIn", "headers"],
+        "required": [
+          "uploadId",
+          "url",
+          "expiresIn",
+          "headers"
+        ],
         "additionalProperties": false
       },
       "DeviceInput": {
@@ -9577,10 +10112,18 @@
           },
           "platform": {
             "type": "string",
-            "enum": ["android", "ios", "web"]
+            "enum": [
+              "android",
+              "ios",
+              "web"
+            ]
           }
         },
-        "required": ["installationId", "name", "platform"],
+        "required": [
+          "installationId",
+          "name",
+          "platform"
+        ],
         "additionalProperties": false
       },
       "DownloadInput": {
@@ -9596,10 +10139,18 @@
           },
           "quality": {
             "type": "string",
-            "enum": ["64", "128", "192"]
+            "enum": [
+              "64",
+              "128",
+              "192"
+            ]
           }
         },
-        "required": ["song", "device", "quality"],
+        "required": [
+          "song",
+          "device",
+          "quality"
+        ],
         "additionalProperties": false
       },
       "StreamInput": {
@@ -9607,7 +10158,11 @@
         "properties": {
           "quality": {
             "type": "string",
-            "enum": ["64", "128", "192"],
+            "enum": [
+              "64",
+              "128",
+              "192"
+            ],
             "default": "64"
           }
         },
@@ -9627,13 +10182,22 @@
           },
           "quality": {
             "type": "string",
-            "enum": ["64", "128", "192"]
+            "enum": [
+              "64",
+              "128",
+              "192"
+            ]
           },
           "duration": {
             "type": "number"
           }
         },
-        "required": ["url", "sessionId", "quality", "duration"],
+        "required": [
+          "url",
+          "sessionId",
+          "quality",
+          "duration"
+        ],
         "additionalProperties": false
       },
       "ListeningInput": {
@@ -9645,7 +10209,13 @@
           },
           "type": {
             "type": "string",
-            "enum": ["play", "pause", "skip", "completion", "heartbeat"]
+            "enum": [
+              "play",
+              "pause",
+              "skip",
+              "completion",
+              "heartbeat"
+            ]
           },
           "seconds": {
             "type": "number",
@@ -9653,7 +10223,11 @@
             "maximum": 60
           }
         },
-        "required": ["sequence", "type", "seconds"],
+        "required": [
+          "sequence",
+          "type",
+          "seconds"
+        ],
         "additionalProperties": false
       },
       "NotificationInput": {
@@ -9674,7 +10248,11 @@
             "format": "uuid"
           }
         },
-        "required": ["user", "title", "body"],
+        "required": [
+          "user",
+          "title",
+          "body"
+        ],
         "additionalProperties": false
       },
       "DownloadGrant": {
@@ -9690,7 +10268,11 @@
           },
           "quality": {
             "type": "string",
-            "enum": ["64", "128", "192"]
+            "enum": [
+              "64",
+              "128",
+              "192"
+            ]
           },
           "contentVersion": {
             "type": "string"
@@ -9705,11 +10287,20 @@
                 "type": "boolean"
               }
             },
-            "required": ["mode", "requiresSecureKeystore"],
+            "required": [
+              "mode",
+              "requiresSecureKeystore"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["url", "entitlementExpiresAt", "quality", "contentVersion", "protection"],
+        "required": [
+          "url",
+          "entitlementExpiresAt",
+          "quality",
+          "contentVersion",
+          "protection"
+        ],
         "additionalProperties": false
       },
       "List": {
@@ -9729,7 +10320,9 @@
             "type": "integer"
           }
         },
-        "required": ["data"],
+        "required": [
+          "data"
+        ],
         "additionalProperties": false
       },
       "Record": {
@@ -9746,7 +10339,10 @@
             "type": "string"
           }
         },
-        "required": ["status", "jobId"],
+        "required": [
+          "status",
+          "jobId"
+        ],
         "additionalProperties": false
       }
     }

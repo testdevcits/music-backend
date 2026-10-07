@@ -50,6 +50,9 @@ export const songInput = z
     bitrate: z.number().int().min(1).max(2000).optional(),
     artwork: mediaUrl.optional(),
     url: mediaUrl.optional(),
+    sourceUrl: mediaUrl.optional(),
+    sourceLicense: z.string().max(500).optional(),
+    rightsHolder: z.string().max(200).optional(),
     coverUrl: mediaUrl.optional(),
     coverPublicId: z.string().max(500).optional(),
     isFavorite: z.boolean().optional(),
@@ -82,6 +85,17 @@ export const licenseInput = z
     endsAt: z.coerce.date(),
     streaming: z.boolean(),
     offline: z.boolean(),
+    source: z.enum(['artist', 'label', 'provider', 'public-domain', 'creative-commons', 'other']).default('other'),
+    licenseName: z.string().trim().max(200).optional(),
+    evidenceUrl: mediaUrl.optional(),
+    documentReference: z.string().trim().max(500).optional(),
+    inAppStreaming: z.boolean().default(false),
+    audioHosting: z.boolean().default(false),
+    commercialUse: z.boolean().default(false),
+    artworkUse: z.boolean().default(false),
+    lyricsUse: z.boolean().default(false),
+    verificationStatus: z.enum(['pending', 'verified', 'rejected']).default('pending'),
+    verificationNotes: z.string().trim().max(2000).optional(),
     territories: z
       .array(z.string().regex(/^[A-Z]{2}$/))
       .max(250)
@@ -89,4 +103,12 @@ export const licenseInput = z
     enabled: z.boolean().default(true),
   })
   .strict()
-  .refine((v) => v.endsAt > v.startsAt, 'endsAt must be after startsAt');
+  .refine((v) => v.endsAt > v.startsAt, 'endsAt must be after startsAt')
+  .refine(
+    (v) => v.verificationStatus !== 'verified' || Boolean(v.evidenceUrl || v.documentReference),
+    'Verified licenses must include an evidence URL or document reference',
+  )
+  .refine(
+    (v) => v.verificationStatus !== 'verified' || (v.streaming && v.inAppStreaming && v.audioHosting && v.commercialUse),
+    'Verified streaming licenses must explicitly allow streaming, in-app playback, audio hosting, and commercial use',
+  );

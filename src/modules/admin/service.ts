@@ -150,6 +150,7 @@ export async function searchMusicImport(query: string, provider = 'configured') 
       bitrate: allowed.bitrate,
       lyrics: allowed.lyrics,
       sourceLicense: item.license || 'provider-license-required',
+      sourceUrl: item.sourceUrl || item.pageURL || item.sourcePage,
       ...allowed,
     };
   });
@@ -212,6 +213,7 @@ export async function importMusicRecord(input: any) {
     provider,
     externalSongId,
     sourceLicense: input.sourceLicense || 'provider-license-required',
+    sourceUrl: input.sourceUrl,
     dateAdded: new Date(),
   };
 

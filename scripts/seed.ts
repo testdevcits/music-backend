@@ -17,8 +17,11 @@ async function main() {
     'Kids',
     'Instrumental',
     'Regional',
+    'Aarti',
+    'Mantra',
+    'Bhajan',
   ]) {
-    const parent = ['Hanuman', 'Krishna', 'Shiv', 'Ram'].includes(name)
+    const parent = ['Hanuman', 'Krishna', 'Shiv', 'Ram', 'Aarti', 'Mantra', 'Bhajan'].includes(name)
       ? await Category.findOne({ slug: 'bhakti' })
       : null;
     await Category.updateOne(
