@@ -248,19 +248,21 @@ export const postSongsIdPublish: RequestHandler = async (req, res) => {
   if (published) {
     const song: any = await Song.findById(songId);
     ensure(song?.processing === 'ready' && (song.audio ?? []).length > 0, 409, 'AUDIO_NOT_READY');
-    const license = await License.findOne({
-      song: songId,
-      enabled: true,
-      streaming: true,
-      startsAt: { $lte: new Date() },
-      endsAt: { $gt: new Date() },
-      verificationStatus: 'verified',
-      inAppStreaming: true,
-      audioHosting: true,
-      commercialUse: true,
-      $or: [{ evidenceUrl: { $exists: true, $ne: '' } }, { documentReference: { $exists: true, $ne: '' } }],
-    });
+    const license: any = await License.findOne({ song: songId, enabled: true });
     ensure(license, 409, 'LICENSE_REQUIRED');
+    const now = new Date();
+    ensure(license.startsAt <= now && license.endsAt > now, 409, 'LICENSE_INACTIVE');
+    ensure(
+      license.evidenceUrl || license.documentReference,
+      409,
+      'LICENSE_EVIDENCE_REQUIRED',
+    );
+    ensure(
+      license.streaming && license.inAppStreaming && license.audioHosting && license.commercialUse,
+      409,
+      'LICENSE_PERMISSIONS_INCOMPLETE',
+    );
+    ensure(license.verificationStatus === 'verified', 409, 'LICENSE_NOT_VERIFIED');
   }
   const row = await Song.findByIdAndUpdate(songId, { $set: { published } }, { new: true });
   ensure(row, 404, 'NOT_FOUND');
