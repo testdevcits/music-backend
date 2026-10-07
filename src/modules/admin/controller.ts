@@ -10,6 +10,7 @@ import { lockUser } from '../billing/service';
 import { Artist, Category, License, Song, Tag } from '../catalog/models';
 import { Device, Download, Notification, Playlist } from '../library/models';
 import { ListeningEvent } from '../playback/models';
+import { getPopularSongs, getTrendingCatalog } from '../catalog/service';
 import { cloudinaryAudioUrl, createCloudinaryAudioUploadSignature, hasCloudinaryConfig } from '../../infrastructure/cloudinary';
 import { streamFile } from '../../infrastructure/media';
 import * as service from './service';
@@ -134,6 +135,8 @@ export const getDashboardOverview: RequestHandler = async (_req, res) => {
     userTrend,
     songTrend,
     playTrend,
+    trending,
+    popularSongs,
   ] = await Promise.all([
     User.countDocuments(),
     User.countDocuments({ disabled: { $ne: true } }),
@@ -149,6 +152,8 @@ export const getDashboardOverview: RequestHandler = async (_req, res) => {
     User.aggregate([{ $match: { createdAt: { $gte: firstMonth } } }, { $group: { _id: { $dateToString: { format: '%Y-%m', date: '$createdAt', timezone: 'UTC' } }, count: { $sum: 1 } } }]),
     Song.aggregate([{ $match: { createdAt: { $gte: firstMonth } } }, { $group: { _id: { $dateToString: { format: '%Y-%m', date: '$createdAt', timezone: 'UTC' } }, count: { $sum: 1 } } }]),
     ListeningEvent.aggregate([{ $match: { type: { $in: ['play', 'completion'] }, createdAt: { $gte: firstMonth } } }, { $group: { _id: { $dateToString: { format: '%Y-%m', date: '$createdAt', timezone: 'UTC' } }, count: { $sum: 1 } } }]),
+    getTrendingCatalog(7, 5),
+    getPopularSongs(5),
   ]);
   const months = Array.from({ length: 6 }, (_, index) => {
     const date = new Date(Date.UTC(firstMonth.getUTCFullYear(), firstMonth.getUTCMonth() + index, 1));
@@ -164,6 +169,8 @@ export const getDashboardOverview: RequestHandler = async (_req, res) => {
   res.json({
     summary: { totalUsers, activeUsers, restrictedUsers, totalSongs, publishedSongs, readySongs, artists, categories, tags, playlists, listeningEvents },
     months,
+    trending,
+    popularSongs,
   });
 };
 export const patchUsersId: RequestHandler = async (req, res) => {

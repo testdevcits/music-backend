@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { ensure } from '../../shared/errors';
 import { id, page, songId } from '../../shared/validation';
 import { Artist, Category, Song } from './models';
-import { findSong, songView } from './service';
+import { findSong, getTrendingCatalog, songView } from './service';
 
 const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const catalogQuery = page.extend({
@@ -117,6 +117,14 @@ export const getSearch: RequestHandler = async (req, res) => {
     total,
     pages: Math.ceil(total / query.limit),
   });
+};
+
+export const getTrending: RequestHandler = async (req, res) => {
+  const input = z.object({
+    days: z.coerce.number().int().min(1).max(90).default(7),
+    limit: z.coerce.number().int().min(1).max(50).default(20),
+  }).parse(req.query);
+  res.set('Cache-Control', 'private, max-age=60').json(await getTrendingCatalog(input.days, input.limit));
 };
 
 export const getMediaCoversId: RequestHandler = async (req, res) => {

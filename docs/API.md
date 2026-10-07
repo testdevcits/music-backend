@@ -30,15 +30,18 @@ curl -X POST http://localhost:4000/api/v1/auth/register \
 
 | Method | Path                             | Input / behavior                                            |
 | ------ | -------------------------------- | ----------------------------------------------------------- |
-| GET    | `/songs`                         | page, limit, metadata filters: q, category/categoryId, tag, artist/artistName, album, language, genre, year/fromYear/toYear/decade, sort |
+| GET    | `/songs`                         | page, limit, metadata filters: q, category/categoryId, tag, artist/artistName, album, language, genre, year/fromYear/toYear/decade, sort (`popular` is all-time recorded play count) |
 | GET    | `/songs/:id`                     | Published, processed song metadata and available qualities  |
 | GET    | `/artists`, `/artists/:id`       | Artist metadata                                             |
 | GET    | `/albums`, `/albums/:id`         | Album metadata                                              |
 | GET    | `/categories`, `/categories/:id` | Dynamic category records with parent IDs                    |
 | GET    | `/tags`, `/tags/:id`             | Tags                                                        |
 | GET    | `/search?q=hanuman`              | Published song title/lyrics text search plus catalog filters |
+| GET    | `/charts/trending?days=7&limit=20` | Published tracks and categories ranked by recorded plays/listening during the requested 1–90 day window |
 
-Song responses omit audio keys, source keys and processing versions; `coverUrl` is temporary. IDs reference related artists/albums/categories/tags. Catalog visibility is distinct from playback permission: expired or territorial licenses can remain visible in discovery, but streaming/download checks deny access. Text search uses MongoDB's tokenizer without language stemming so song language codes do not become text-index overrides. Search accepts artist name, category slug/name, year range or decade, genre and language. Sort values are `recent`, `year-asc`, `year-desc`, `popular`, and `title`. Results include `total` and `pages`.
+Song responses omit audio keys, source keys and processing versions; `coverUrl` is temporary. IDs reference related artists/albums/categories/tags. Catalog visibility is distinct from playback permission: expired or territorial licenses can remain visible in discovery, but streaming/download checks deny access. Text search uses MongoDB's tokenizer without language stemming so song language codes do not become text-index overrides. Search accepts artist name, category slug/name, year range or decade, genre and language. Sort values are `recent`, `year-asc`, `year-desc`, `popular`, and `title`. `popular` sorts by the song's all-time `playCount`, incremented once for each accepted `play` event. `/charts/trending` aggregates events from the selected recent window and returns top tracks with play/completion/listening/listener counts plus top categories; only published, ready songs are returned. Results include `total` and `pages` where applicable.
+
+Categories are catalog metadata managed by admins. Add a category in `/admin/categories`, then assign its ID to `categories` when creating/updating a song. Listener app category filters use `GET /songs?category=<category-slug>`; category options come from `GET /categories`. Trending categories are calculated from those assignments and recent listening events, not manually tagged as “trending.”
 
 Example: `GET /songs?artistName=Rib%20hav&category=bhakti&decade=1990&sort=year-asc&page=1&limit=20`. `GET /search?q=chalisa&language=Hindi&category=hanuman-bhajans` combines text search and filters. Use `/categories` and `/artists` to populate filter options.
 

@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import { ensure } from '../../shared/errors';
 import { policy } from '../billing/service';
 import { availableSong } from '../catalog/service';
+import { Song } from '../catalog/models';
 import { ListeningEvent, PlaybackSession } from './models';
 export function allowedListeningDelta(state: string, elapsed: number, claimed: number) {
   return ['play', 'heartbeat'].includes(state) ? Math.min(claimed, Math.max(0, elapsed), 60) : 0;
@@ -78,6 +79,13 @@ export async function recordEvent(
       [{ ...input, seconds, user, song: playback.song, session: sessionId }],
       { session },
     );
+    if (input.type === 'play') {
+      await Song.updateOne(
+        { _id: playback.song },
+        { $inc: { playCount: 1 }, $set: { lastPlayedAt: new Date() } },
+        { session },
+      );
+    }
     return event;
   });
 }

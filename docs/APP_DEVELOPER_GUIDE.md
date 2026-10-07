@@ -62,6 +62,25 @@ Create a private playlist by default:
 
 `name` is optional (the server generates `Playlist 1`, `Playlist 2`, etc.); `public` is optional and defaults to `false`. The owner can rename it or change `public` with `PATCH`, and only the owner can edit, add/remove songs, or delete it. `GET /playlists/{id}` returns the playlist plus ordered playable `items`; unavailable/unpublished songs are omitted from `items`. Song membership is idempotent and capped at 1,000 songs. Playlist/song IDs from API responses work directly.
 
+## Categories, popular songs, and trending
+
+Admins create categories such as “Bhakti”, “Bhajan”, or “Meditation” in Catalog, then assign category IDs to songs. The app loads filter options from `GET /categories` and filters the published song catalog with `GET /songs?category=bhakti`. Categories are editorial labels; they don’t automatically change based on plays.
+
+Use these app endpoints for popularity:
+
+```http
+GET /songs?sort=popular&page=1&limit=20
+GET /charts/trending?days=7&limit=20
+```
+
+`sort=popular` orders songs by their all-time `playCount`. The counter increments once when the backend accepts a distinct `play` event for a streaming session. `/charts/trending` ranks published, ready songs over a recent 1–90 day window and also returns top categories. It includes play count, completions, listened seconds, and listener count. The default window is 7 days. Categories receive the listening activity of songs assigned to them.
+
+For those numbers to be meaningful, the player must create a server playback session and send sequenced session events (`play`, `heartbeat`, `pause`, `completion`, or `skip`) while online. A song that is newly published or has no play events won’t appear as trending yet; the app can show a “New releases” section using catalog creation dates instead.
+
+### Admin dashboard
+
+`GET /admin/dashboard` is admin-token protected. It returns the existing account/catalog/monthly summary plus `trending` (last 7 days, top 5 songs and categories) and `popularSongs` (top 5 all-time play counts). The Admin Dashboard displays both lists. The endpoint updates when listening event requests are recorded; offline plays aren’t synced to this ranking today.
+
 ## Online playback
 
 1. Discover playable catalog entries with `GET /songs`, `GET /search`, and related artist/category routes. The catalog routes require a bearer token.

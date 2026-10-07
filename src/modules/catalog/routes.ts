@@ -7,6 +7,7 @@ export const catalogRoutes = Router();
 catalogRoutes.get('/songs', controller.getSongs);
 catalogRoutes.get('/songs/:id', controller.getSongsId);
 catalogRoutes.get('/search', controller.getSearch);
+catalogRoutes.get('/charts/trending', controller.getTrending);
 catalogRoutes.get('/media/covers/:id', controller.getMediaCoversId);
 for (const [path, model] of Object.entries({
   artists: Artist,
