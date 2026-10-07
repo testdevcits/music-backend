@@ -16,6 +16,7 @@
     "seed": "tsx scripts/seed.ts",
     "seed:user-listening-demo": "tsx scripts/seed-user-listening-demo.ts",
     "seed:devotional-catalog": "tsx scripts/seed-devotional-catalog.ts",
+    "seed:pixabay-test-audio": "tsx scripts/seed-pixabay-test-audio.ts",
     "db:indexes": "tsx scripts/indexes.ts",
     "format": "prettier --write src scripts tests docs package.json tsconfig.json README.md docker-compose.yml vercel.json docker-compose.worker.yml",
     "format:check": "prettier --check src scripts tests docs package.json tsconfig.json README.md docker-compose.yml vercel.json docker-compose.worker.yml",

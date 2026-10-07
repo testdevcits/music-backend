@@ -160,4 +160,6 @@ Albums/categories/tags/songs are edited in place rather than hard-deleted to pre
 
 For sample devotional categories/tags, run `DEVOTIONAL_CATALOG_SEED_CONFIRM=YES npm run seed:devotional-catalog`. It idempotently creates Bhakti subcategories and tags and attaches them to an existing Hanuman Chalisa record if found. It does not create a fake audio track, grant a license, or change audio/publication status.
 
+For local playback testing from the supplied Pixabay search snapshot, run `PIXABAY_TEST_AUDIO_SEED_CONFIRM=YES npm run seed:pixabay-test-audio -- /path/to/pasted-snapshot.json`. This development-only seed imports the snapshot's first-page metadata and source links and attaches generated 12-second WAV tones with an internal test-only license. It never downloads or hosts the original Pixabay audio; the imported entries are test fixtures, not the Pixabay recordings. The script refuses to run with `NODE_ENV=production`.
+
 Covers attach to songs in this upload flow. Artist and album image support is a future targeted GridFS workflow.
