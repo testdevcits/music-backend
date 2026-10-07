@@ -1,5 +1,9 @@
 import { z } from 'zod';
 export const id = z.string().regex(/^[a-f\d]{24}$/i, 'Invalid object ID');
+export const songId = z.string().regex(
+  /^(?:[a-f\d]{24}|[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12})$/i,
+  'Invalid song ID',
+);
 export const page = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),

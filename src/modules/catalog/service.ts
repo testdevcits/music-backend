@@ -1,10 +1,18 @@
 import { ensure } from '../../shared/errors';
 import { License, Song } from './models';
+import { songId as songIdSchema } from '../../shared/validation';
+
+export async function findSong(songId: string, filter: Record<string, unknown> = {}) {
+  const parsedId = songIdSchema.parse(songId);
+  const identity = /^[a-f\d]{24}$/i.test(parsedId) ? { _id: parsedId } : { id: parsedId };
+  return Song.findOne({ ...identity, ...filter });
+}
+
 export async function availableSong(songId: string, offline = false) {
-  const song: any = await Song.findOne({ _id: songId, published: true, processing: 'ready' });
+  const song: any = await findSong(songId, { published: true, processing: 'ready' });
   ensure(song, 404, 'SONG_UNAVAILABLE');
   const license: any = await License.findOne({
-    song: songId,
+    song: song._id,
     enabled: true,
     startsAt: { $lte: new Date() },
     endsAt: { $gt: new Date() },

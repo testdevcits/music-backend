@@ -2,9 +2,8 @@ import { RequestHandler } from 'express';
 import { streamFile } from '../../infrastructure/media';
 import { z } from 'zod';
 import { ensure } from '../../shared/errors';
-import { id, page } from '../../shared/validation';
-import { Song } from './models';
-import { songView } from './service';
+import { id, page, songId } from '../../shared/validation';
+import { findSong, songView } from './service';
 export const getSongs: RequestHandler = async (req, res) => {
   const q = page
     .extend({
@@ -31,8 +30,7 @@ export const getSongs: RequestHandler = async (req, res) => {
   res.json({ data: await Promise.all(rows.map(songView)), page: q.page, limit: q.limit });
 };
 export const getSongsId: RequestHandler = async (req, res) => {
-  const song = await Song.findOne({
-    _id: id.parse(req.params.id),
+  const song = await findSong(songId.parse(req.params.id), {
     published: true,
     processing: 'ready',
   });

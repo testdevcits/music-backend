@@ -58,7 +58,7 @@ Song responses omit audio keys, source keys and processing versions; `coverUrl` 
 
 ## Streaming and listening events
 
-`POST /streaming/:songId` with `{ "quality": "64" }` (also `128`, `192`) returns a protected API media path. Request it with the same Bearer token:
+`POST /streaming/:songId` with `{ "quality": "64" }` (also `128`, `192`) returns a protected API media path. Use the song `id` returned by `GET /songs`; the endpoint also accepts a MongoDB song ID for existing clients. Request the returned audio path with the same Bearer token:
 
 ```json
 {
@@ -77,7 +77,7 @@ Audio is stored in MongoDB GridFS and is streamed only through this authenticate
 { "sequence": 1, "type": "heartbeat", "seconds": 15 }
 ```
 
-Types: `play`, `pause`, `skip`, `completion`, `heartbeat`. Sequence starts at 1 and increments by exactly 1. `seconds` is elapsed listening since the previous event, between 0 and 60; send heartbeats every 15–30 seconds. Duplicate sequence returns the existing event; a gap returns 409. The server bounds duration using its own elapsed time and previous state. Resume with `play`; skip/completion are terminal and require a new streaming session for another play. This tracks engagement, not certified playback or royalty accounting.
+Types: `play`, `pause`, `skip`, `completion`, `heartbeat`. Sequence starts at 1 and increments by exactly 1. `seconds` is elapsed listening since the previous event, between 0 and 60; send heartbeats every 15–30 seconds while audio is playing. Send `pause` when paused, `play` when resumed, and `completion` or `skip` when the track ends. Duplicate sequence returns the existing event; a gap returns 409. The server bounds duration using its own elapsed time and previous state. These events power admin user details: total listened time, weekday totals, most-listened songs/categories, plays, completions, and recent activity. Without client event calls, those listening metrics remain zero. This tracks engagement, not certified playback or royalty accounting.
 
 `GET /streaming/sessions/:id/audio` streams the selected GridFS quality. It requires the same authenticated user and a still-valid playback session.
 

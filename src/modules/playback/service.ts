@@ -18,7 +18,7 @@ export async function stream(user: string, songId: string, quality: string) {
   ensure(audio?.fileId || audio?.url, 409, 'QUALITY_UNAVAILABLE');
   const session: any = await PlaybackSession.create({
     user,
-    song: songId,
+    song: song._id,
     quality: selectedQuality,
     expiresAt: new Date(Math.min(Date.now() + 4 * 3600000, license.endsAt!.getTime())),
   });

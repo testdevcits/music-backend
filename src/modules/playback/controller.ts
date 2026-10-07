@@ -1,6 +1,6 @@
 import { RequestHandler } from 'express';
 import { z } from 'zod';
-import { id, quality } from '../../shared/validation';
+import { id, quality, songId } from '../../shared/validation';
 import { streamFile } from '../../infrastructure/media';
 import { recordEvent, stream, streamingFile } from './service';
 export const postStreamingSongId: RequestHandler = async (req, res) => {
@@ -10,7 +10,7 @@ export const postStreamingSongId: RequestHandler = async (req, res) => {
     .parse(req.body);
   res
     .set('Cache-Control', 'no-store')
-    .json(await stream(req.auth.userId, id.parse(req.params.songId), input.quality));
+    .json(await stream(req.auth.userId, songId.parse(req.params.songId), input.quality));
 };
 export const postStreamingSessionsIdEvents: RequestHandler = async (req, res) => {
   const input = z
