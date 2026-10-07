@@ -9061,99 +9061,16 @@
       }
     },
     "/admin/notifications": {
-      "post": {
-        "summary": "Create an in-app notification",
-        "operationId": "postAdminNotifications",
+      "get": {
+        "summary": "List all notifications across users",
+        "operationId": "getAdminNotifications",
         "tags": ["admin"],
         "responses": {
-          "201": {
-            "description": "Notification created"
-          },
           "200": {
-            "description": "Existing notification returned for repeated dedupe key"
-          },
-          "400": {
-            "description": "Invalid request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authentication required",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Permission denied",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Resource unavailable",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limited",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
+            "description": "Paginated notification list with recipient and read state"
           }
         },
-        "description": "Requires an administrator role.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/NotificationInput"
-              }
-            }
-          }
-        }
+        "description": "Requires an administrator role."
       }
     },
     "/admin/analytics": {

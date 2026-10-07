@@ -1,6 +1,5 @@
 import { RequestHandler } from 'express';
 import mongoose from 'mongoose';
-import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { requireAudioQueue } from '../../infrastructure/queues';
 import { ensure } from '../../shared/errors';
@@ -369,28 +368,19 @@ export const putSubscriptionsUserId: RequestHandler = async (req, res) => {
   });
   res.json(result);
 };
-export const postNotifications: RequestHandler = async (req, res) => {
-  const input = z
-    .object({
-      user: z.string().regex(/^(?:[a-f\d]{24}|[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12})$/i),
-      title: name,
-      body: z.string().min(1).max(2000),
-      dedupeKey: z.string().uuid().optional(),
-    })
-    .strict()
-    .parse(req.body);
-  const target = await User.findOne(
-    /^[a-f\d]{24}$/i.test(input.user) ? { _id: input.user } : { id: input.user },
-  ).select('_id');
-  ensure(target, 404, 'USER_NOT_FOUND');
-  const dedupeKey = input.dedupeKey ?? randomUUID();
-  const result = await Notification.updateOne(
-    { dedupeKey },
-    { $setOnInsert: { user: target._id, title: input.title, body: input.body, dedupeKey } },
-    { upsert: true },
-  );
-  const notification = await Notification.findOne({ dedupeKey }).select('id user title body readAt createdAt');
-  res.status(result.upsertedCount ? 201 : 200).json(notification);
+export const getNotifications: RequestHandler = async (req, res) => {
+  const q = page.parse(req.query);
+  const [data, total, unreadCount] = await Promise.all([
+    Notification.find()
+      .select('id user title body readAt createdAt')
+      .populate('user', 'id publicId name email')
+      .sort({ createdAt: -1 })
+      .skip((q.page - 1) * q.limit)
+      .limit(q.limit),
+    Notification.countDocuments(),
+    Notification.countDocuments({ readAt: { $exists: false } }),
+  ]);
+  res.json({ data, page: q.page, limit: q.limit, total, unreadCount });
 };
 export const getAnalytics: RequestHandler = async (req, res) => {
   const input = z

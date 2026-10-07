@@ -245,5 +245,5 @@ adminRoutes.get('/jobs/:id', controller.getJobsId);
 adminRoutes.post('/jobs/:id/retry', controller.postJobsIdRetry);
 adminRoutes.get('/subscriptions', controller.getSubscriptions);
 adminRoutes.put('/subscriptions/:userId', controller.putSubscriptionsUserId);
-adminRoutes.post('/notifications', controller.postNotifications);
+adminRoutes.get('/notifications', controller.getNotifications);
 adminRoutes.get('/analytics', controller.getAnalytics);
