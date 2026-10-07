@@ -192,6 +192,7 @@ adminRoutes.patch('/users/:id', controller.patchUsersId);
 adminRoutes.put('/licenses/:songId', controller.putLicensesSongId);
 adminRoutes.get('/licenses', controller.getLicenses);
 adminRoutes.post('/songs/:id/publish', controller.postSongsIdPublish);
+adminRoutes.get('/songs/:id/preview', controller.getSongsIdPreview);
 adminRoutes.post('/songs/:id/uploads', controller.postSongsIdUploads);
 adminRoutes.get('/songs/:id/cloudinary-signature', controller.getSongsIdCloudinarySignature);
 adminRoutes.post('/songs/:id/cloudinary-complete', controller.postSongsIdCloudinaryComplete);

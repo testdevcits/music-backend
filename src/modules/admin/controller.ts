@@ -11,6 +11,7 @@ import { License, Song } from '../catalog/models';
 import { Device, Download, Playlist } from '../library/models';
 import { ListeningEvent } from '../playback/models';
 import { cloudinaryAudioUrl, createCloudinaryAudioUploadSignature, hasCloudinaryConfig } from '../../infrastructure/cloudinary';
+import { streamFile } from '../../infrastructure/media';
 import * as service from './service';
 import * as validators from './validators';
 export const deletePlaylistsId: RequestHandler = async (req, res) => {
@@ -61,6 +62,17 @@ export const getLicenses: RequestHandler = async (req, res) => {
       .skip((q.page - 1) * q.limit)
       .limit(q.limit),
   });
+};
+export const getSongsIdPreview: RequestHandler = async (req, res) => {
+  const song: any = await Song.findById(id.parse(req.params.id)).select('+sourceFileId');
+  ensure(song?.processing === 'ready', 404, 'AUDIO_NOT_READY');
+  const audio = (song.audio ?? []).find((item: any) => item.fileId || item.url);
+  ensure(audio, 404, 'MEDIA_NOT_FOUND');
+  if (audio.url) {
+    res.redirect(302, audio.url);
+    return;
+  }
+  streamFile(audio.fileId, audio.mime || 'audio/mpeg', res);
 };
 export const postSongsIdPublish: RequestHandler = async (req, res) => {
   const songId = id.parse(req.params.id);

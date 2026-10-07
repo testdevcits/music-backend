@@ -20,7 +20,7 @@ export async function songView(song: any) {
   const value = typeof song.toObject === 'function' ? song.toObject() : { ...song };
   const audio = value.audio ?? [];
   const qualities = audio.map((a: any) => a.quality);
-  const audioUrl = audio.find((a: any) => a.url)?.url;
+  // Audio files are served through the authenticated admin preview endpoint.
   delete value.audio;
   delete value.sourceFileId;
   delete value.audioVersion;
@@ -31,7 +31,6 @@ export async function songView(song: any) {
   return {
     ...value,
     qualities,
-    ...(audioUrl ? { audioUrl } : {}),
     ...(hasCover
       ? {
           coverUrl: value.coverUrl || `/api/v1/media/covers/${value._id}`,
