@@ -27,4 +27,6 @@ libraryRoutes.post('/downloads/:id/url', controller.postDownloadsIdUrl);
 libraryRoutes.get('/downloads/:id/audio', controller.getDownloadsIdAudio);
 libraryRoutes.delete('/downloads/:id', controller.deleteDownloadsId);
 libraryRoutes.get('/notifications', controller.getNotifications);
+libraryRoutes.get('/notifications/unread-count', controller.getNotificationsUnreadCount);
+libraryRoutes.patch('/notifications/read-all', controller.patchNotificationsReadAll);
 libraryRoutes.patch('/notifications/:id/read', controller.patchNotificationsIdRead);

@@ -67,12 +67,13 @@ const notification = withSecureId(
   new Schema(
     {
       user: { type: oid, ref: 'User', required: true, index: true },
-      title: String,
-      body: String,
-      dedupeKey: { type: String, unique: true },
+      title: { type: String, required: true, trim: true, maxlength: 200 },
+      body: { type: String, required: true, trim: true, maxlength: 2000 },
+      dedupeKey: { type: String, required: true, unique: true },
       readAt: Date,
     },
     { timestamps: true },
   ),
 );
+notification.index({ user: 1, createdAt: -1 });
 export const Notification = model('Notification', notification);

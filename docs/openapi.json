@@ -3133,8 +3133,40 @@
               "maximum": 100,
               "default": 20
             }
+          },
+          {
+            "in": "query",
+            "name": "unreadOnly",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
           }
         ]
+      }
+    },
+    "/notifications/unread-count": {
+      "get": {
+        "summary": "Get unread notification count",
+        "operationId": "getNotificationsUnreadCount",
+        "tags": ["notifications"],
+        "responses": {
+          "200": {
+            "description": "Unread notification count"
+          }
+        }
+      }
+    },
+    "/notifications/read-all": {
+      "patch": {
+        "summary": "Mark all notifications read",
+        "operationId": "patchNotificationsReadAll",
+        "tags": ["notifications"],
+        "responses": {
+          "200": {
+            "description": "Number of notifications marked read"
+          }
+        }
       }
     },
     "/notifications/{id}/read": {
@@ -3224,7 +3256,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "pattern": "^[a-fA-F0-9]{24}$"
+              "pattern": "^(?:[a-fA-F0-9]{24}|[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})$"
             }
           }
         ]
@@ -9030,12 +9062,15 @@
     },
     "/admin/notifications": {
       "post": {
-        "summary": "Queue notification",
+        "summary": "Create an in-app notification",
         "operationId": "postAdminNotifications",
         "tags": ["admin"],
         "responses": {
-          "202": {
-            "description": "Success"
+          "201": {
+            "description": "Notification created"
+          },
+          "200": {
+            "description": "Existing notification returned for repeated dedupe key"
           },
           "400": {
             "description": "Invalid request",
@@ -9709,7 +9744,7 @@
         "properties": {
           "user": {
             "type": "string",
-            "pattern": "^[a-fA-F0-9]{24}$"
+            "pattern": "^(?:[a-fA-F0-9]{24}|[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})$"
           },
           "title": {
             "type": "string"
@@ -9722,7 +9757,7 @@
             "format": "uuid"
           }
         },
-        "required": ["user", "title", "body", "dedupeKey"],
+        "required": ["user", "title", "body"],
         "additionalProperties": false
       },
       "DownloadGrant": {

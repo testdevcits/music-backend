@@ -1,14 +1,15 @@
 import { RequestHandler } from 'express';
 import mongoose from 'mongoose';
+import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { requireAudioQueue, requireNotificationQueue } from '../../infrastructure/queues';
+import { requireAudioQueue } from '../../infrastructure/queues';
 import { ensure } from '../../shared/errors';
 import { id, name, page } from '../../shared/validation';
 import { allocateUserPublicId, RefreshSession, User } from '../auth/models';
 import { Plan, Subscription } from '../billing/models';
 import { lockUser } from '../billing/service';
 import { Artist, Category, License, Song, Tag } from '../catalog/models';
-import { Device, Download, Playlist } from '../library/models';
+import { Device, Download, Notification, Playlist } from '../library/models';
 import { ListeningEvent } from '../playback/models';
 import { cloudinaryAudioUrl, createCloudinaryAudioUploadSignature, hasCloudinaryConfig } from '../../infrastructure/cloudinary';
 import { streamFile } from '../../infrastructure/media';
@@ -371,16 +372,25 @@ export const putSubscriptionsUserId: RequestHandler = async (req, res) => {
 export const postNotifications: RequestHandler = async (req, res) => {
   const input = z
     .object({
-      user: id,
+      user: z.string().regex(/^(?:[a-f\d]{24}|[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12})$/i),
       title: name,
       body: z.string().min(1).max(2000),
-      dedupeKey: z.string().uuid(),
+      dedupeKey: z.string().uuid().optional(),
     })
     .strict()
     .parse(req.body);
-  ensure(await User.exists({ _id: input.user }), 404, 'NOT_FOUND');
-  await requireNotificationQueue().add('notify', input, { jobId: input.dedupeKey });
-  res.sendStatus(202);
+  const target = await User.findOne(
+    /^[a-f\d]{24}$/i.test(input.user) ? { _id: input.user } : { id: input.user },
+  ).select('_id');
+  ensure(target, 404, 'USER_NOT_FOUND');
+  const dedupeKey = input.dedupeKey ?? randomUUID();
+  const result = await Notification.updateOne(
+    { dedupeKey },
+    { $setOnInsert: { user: target._id, title: input.title, body: input.body, dedupeKey } },
+    { upsert: true },
+  );
+  const notification = await Notification.findOne({ dedupeKey }).select('id user title body readAt createdAt');
+  res.status(result.upsertedCount ? 201 : 200).json(notification);
 };
 export const getAnalytics: RequestHandler = async (req, res) => {
   const input = z

@@ -2,7 +2,7 @@
 
 Base URL: `http://localhost:4000/api/v1`. JSON request/response bodies. Except authentication and `/health/*`, all endpoints require `Authorization: Bearer <accessToken>`. Admin endpoints additionally require a current admin role. Private responses use `Cache-Control: no-store`.
 
-List endpoints generally accept `page=1&limit=20` (maximum 100) and return `{data:[...]}` with page metadata where implemented. IDs are 24-character MongoDB object IDs. Timestamps are ISO 8601 UTC. Unknown request-body fields are rejected.
+List endpoints generally accept `page=1&limit=20` (maximum 100) and return `{data:[...]}` with page metadata where implemented. Use the resource `id` returned by an endpoint; selected routes also accept MongoDB object IDs for backwards compatibility. Timestamps are ISO 8601 UTC. Unknown request-body fields are rejected.
 
 Errors use `{ "error": { "code": "PLAN_RESTRICTED", "message": "PLAN_RESTRICTED" } }`; validation errors include `details`. Common statuses: 400 invalid input, 401 login/token failure, 403 permission/plan/license restriction, 404 missing or inaccessible resource, 409 conflict/limit/state issue, 410 upload expired, 413 oversized upload, 429 rate limit, 500 internal failure. Quota denials return 403.
 
@@ -53,8 +53,12 @@ Song responses omit audio keys, source keys and processing versions; `coverUrl` 
 | PUT, DELETE | `/favorites/:songId`           | Idempotent favorite/unfavorite                                 |
 | GET         | `/history`                     | Newest listening events first, including song ID/type/duration |
 | DELETE      | `/history`                     | Delete the user's listening events                             |
-| GET         | `/notifications`               | In-app inbox                                                   |
-| PATCH       | `/notifications/:id/read`      | Mark owned notification read                                   |
+| GET         | `/notifications?page=1&limit=20` | In-app inbox; also accepts `unreadOnly=true`; returns total and unread counts |
+| GET         | `/notifications/unread-count`  | Current user's unread count                                    |
+| PATCH       | `/notifications/:id/read`      | Mark an owned notification read; other users' IDs return 404   |
+| PATCH       | `/notifications/read-all`      | Mark all of the current user's notifications read              |
+
+All app notification routes require the user's Bearer access token. Inbox entries are persisted in MongoDB and appear immediately after the admin send API succeeds; the app can poll the unread-count endpoint or refresh the inbox. Example entry: `{ "id": "...", "title": "New release", "body": "A new song is available", "createdAt": "..." }`; `readAt` is included after the user reads it.
 
 ## Streaming and listening events
 
@@ -127,7 +131,7 @@ All paths below begin `/admin`.
 | POST       | `/jobs/:id/retry`                                                               | Retry a failed audio job; 202                                 |
 | GET        | `/subscriptions`                                                                | Paginated subscriptions                                       |
 | PUT        | `/subscriptions/:userId`                                                        | Assign/replace/cancel subscription                            |
-| POST       | `/notifications`                                                                | Queue durable in-app notification; 202                        |
+| POST       | `/notifications`                                                                | Create durable in-app notification immediately; 201 (200 for a repeated dedupe key) |
 | GET        | `/analytics?days=7`                                                             | Top 100 songs by observed listening duration; 1–90 days       |
 
 Create/update bodies:
@@ -141,7 +145,7 @@ Create/update bodies:
 - Plan: `{name,slug,priceMinor,currency,offlineLimit,deviceLimit,offlineDays,qualities,active}`. Quota fields cannot change while active subscriptions use the plan; create a new plan version.
 - License: `{holder,reference?,startsAt,endsAt,streaming,offline,territories:[],enabled}`. Empty territories means globally licensed. Restricted territories currently deny media access pending a trusted location integration.
 - Subscription: `{plan,startsAt,endsAt,status:"active"|"cancelled",externalReference?}`. Replacement revokes existing downloads and device registrations.
-- Notification: `{user,title,body,dedupeKey:UUID}`. Same dedupe key is idempotent.
+- Notification: `{user,title,body,dedupeKey?:UUID}`. `user` accepts the ID returned by `/admin/users` or a MongoDB ID. The dedupe key is generated if omitted; reusing it is idempotent. The notification is written to the inbox immediately and does not require Redis.
 
 Albums/categories/tags/songs are edited in place rather than hard-deleted to preserve references and listening history. An unused artist can be deleted; artists referenced by a song or album return `ARTIST_IN_USE`. Unpublish songs, disable licenses, or deactivate plans to remove availability.
 

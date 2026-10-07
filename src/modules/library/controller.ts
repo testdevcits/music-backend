@@ -3,7 +3,7 @@ import { RequestHandler } from 'express';
 import { z } from 'zod';
 import { ensure } from '../../shared/errors';
 import { streamBucketFile, streamFile } from '../../infrastructure/media';
-import { id, name, page, quality } from '../../shared/validation';
+import { id, name, page, publicOrMongoId, quality } from '../../shared/validation';
 import { User } from '../auth/models';
 import { Song } from '../catalog/models';
 import { ListeningEvent } from '../playback/models';
@@ -307,18 +307,47 @@ export const deleteDownloadsId: RequestHandler = async (req, res) => {
   res.sendStatus(204);
 };
 export const getNotifications: RequestHandler = async (req, res) => {
-  const q = page.parse(req.query);
-  res.json({
-    data: await Notification.find({ user: req.auth.userId })
+  const q = page.extend({ unreadOnly: z.enum(['true', 'false']).default('false') }).parse(req.query);
+  const filter = {
+    user: req.auth.userId,
+    ...(q.unreadOnly === 'true' ? { readAt: { $exists: false } } : {}),
+  };
+  const [data, total, unreadCount] = await Promise.all([
+    Notification.find(filter)
+      .select('id title body readAt createdAt')
       .sort({ createdAt: -1 })
       .skip((q.page - 1) * q.limit)
       .limit(q.limit),
+    Notification.countDocuments(filter),
+    Notification.countDocuments({ user: req.auth.userId, readAt: { $exists: false } }),
+  ]);
+  res.json({
+    data,
+    page: q.page,
+    limit: q.limit,
+    total,
+    unreadCount,
   });
 };
+export const getNotificationsUnreadCount: RequestHandler = async (req, res) => {
+  const count = await Notification.countDocuments({ user: req.auth.userId, readAt: { $exists: false } });
+  res.json({ count });
+};
 export const patchNotificationsIdRead: RequestHandler = async (req, res) => {
-  await Notification.updateOne(
-    { _id: id.parse(req.params.id), user: req.auth.userId },
+  const notificationId = publicOrMongoId.parse(req.params.id);
+  const identity = /^[a-f\d]{24}$/i.test(notificationId) ? { _id: notificationId } : { id: notificationId };
+  const notification = await Notification.findOneAndUpdate(
+    { ...identity, user: req.auth.userId },
+    { $set: { readAt: new Date() } },
+    { new: true },
+  );
+  ensure(notification, 404, 'NOT_FOUND');
+  res.sendStatus(204);
+};
+export const patchNotificationsReadAll: RequestHandler = async (req, res) => {
+  const result = await Notification.updateMany(
+    { user: req.auth.userId, readAt: { $exists: false } },
     { $set: { readAt: new Date() } },
   );
-  res.sendStatus(204);
+  res.json({ updated: result.modifiedCount });
 };
