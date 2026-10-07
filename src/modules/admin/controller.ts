@@ -7,7 +7,7 @@ import { id, name, page } from '../../shared/validation';
 import { RefreshSession, User } from '../auth/models';
 import { Plan, Subscription } from '../billing/models';
 import { lockUser } from '../billing/service';
-import { License, Song } from '../catalog/models';
+import { Artist, Category, License, Song, Tag } from '../catalog/models';
 import { Device, Download, Playlist } from '../library/models';
 import { ListeningEvent } from '../playback/models';
 import { cloudinaryAudioUrl, createCloudinaryAudioUploadSignature, hasCloudinaryConfig } from '../../infrastructure/cloudinary';
@@ -25,6 +25,56 @@ export const getUsers: RequestHandler = async (req, res) => {
       .select('name email role disabled createdAt')
       .skip((q.page - 1) * q.limit)
       .limit(q.limit),
+  });
+};
+export const getDashboardOverview: RequestHandler = async (_req, res) => {
+  const now = new Date();
+  const firstMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 5, 1));
+  const [
+    totalUsers,
+    activeUsers,
+    restrictedUsers,
+    totalSongs,
+    publishedSongs,
+    readySongs,
+    artists,
+    categories,
+    tags,
+    playlists,
+    listeningEvents,
+    userTrend,
+    songTrend,
+    playTrend,
+  ] = await Promise.all([
+    User.countDocuments(),
+    User.countDocuments({ disabled: { $ne: true } }),
+    User.countDocuments({ disabled: true }),
+    Song.countDocuments(),
+    Song.countDocuments({ published: true }),
+    Song.countDocuments({ processing: 'ready' }),
+    Artist.countDocuments(),
+    Category.countDocuments(),
+    Tag.countDocuments(),
+    Playlist.countDocuments(),
+    ListeningEvent.countDocuments({ type: { $in: ['play', 'completion'] } }),
+    User.aggregate([{ $match: { createdAt: { $gte: firstMonth } } }, { $group: { _id: { $dateToString: { format: '%Y-%m', date: '$createdAt', timezone: 'UTC' } }, count: { $sum: 1 } } }]),
+    Song.aggregate([{ $match: { createdAt: { $gte: firstMonth } } }, { $group: { _id: { $dateToString: { format: '%Y-%m', date: '$createdAt', timezone: 'UTC' } }, count: { $sum: 1 } } }]),
+    ListeningEvent.aggregate([{ $match: { type: { $in: ['play', 'completion'] }, createdAt: { $gte: firstMonth } } }, { $group: { _id: { $dateToString: { format: '%Y-%m', date: '$createdAt', timezone: 'UTC' } }, count: { $sum: 1 } } }]),
+  ]);
+  const months = Array.from({ length: 6 }, (_, index) => {
+    const date = new Date(Date.UTC(firstMonth.getUTCFullYear(), firstMonth.getUTCMonth() + index, 1));
+    const key = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
+    return {
+      key,
+      label: new Intl.DateTimeFormat('en', { month: 'short', timeZone: 'UTC' }).format(date),
+      users: userTrend.find((item: any) => item._id === key)?.count ?? 0,
+      songs: songTrend.find((item: any) => item._id === key)?.count ?? 0,
+      plays: playTrend.find((item: any) => item._id === key)?.count ?? 0,
+    };
+  });
+  res.json({
+    summary: { totalUsers, activeUsers, restrictedUsers, totalSongs, publishedSongs, readySongs, artists, categories, tags, playlists, listeningEvents },
+    months,
   });
 };
 export const patchUsersId: RequestHandler = async (req, res) => {

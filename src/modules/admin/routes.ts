@@ -7,11 +7,40 @@ import { User } from '../auth/models';
 import { Plan, Subscription } from '../billing/models';
 import { Album, Artist, Category, Song, Tag } from '../catalog/models';
 import { Playlist } from '../library/models';
+import { Schema, model } from 'mongoose';
 import * as controller from './controller';
 import * as service from './service';
 import * as validators from './validators';
 export const adminRoutes = Router();
 adminRoutes.use(admin);
+
+const PlatformPolicy = model('PlatformPolicy', new Schema({
+  title: { type: String, required: true, trim: true, maxlength: 160 },
+  type: { type: String, required: true, enum: ['terms', 'privacy', 'content', 'community', 'other'] },
+  version: { type: String, required: true, trim: true, maxlength: 40 },
+  effectiveAt: { type: Date, required: true },
+  content: { type: String, required: true, maxlength: 50000 },
+  active: { type: Boolean, default: true },
+}, { timestamps: true }));
+
+adminRoutes.get('/policies', async (_req, res) => {
+  res.json({ data: await PlatformPolicy.find().sort({ updatedAt: -1 }).lean() });
+});
+adminRoutes.post('/policies', async (req, res) => {
+  const input = z.object({ title: z.string().trim().min(1).max(160), type: z.enum(['terms', 'privacy', 'content', 'community', 'other']), version: z.string().trim().min(1).max(40), effectiveAt: z.coerce.date(), content: z.string().trim().min(1).max(50000), active: z.boolean().default(true) }).strict().parse(req.body);
+  res.status(201).json(await PlatformPolicy.create(input));
+});
+adminRoutes.patch('/policies/:id', async (req, res) => {
+  const input = z.object({ title: z.string().trim().min(1).max(160).optional(), type: z.enum(['terms', 'privacy', 'content', 'community', 'other']).optional(), version: z.string().trim().min(1).max(40).optional(), effectiveAt: z.coerce.date().optional(), content: z.string().trim().min(1).max(50000).optional(), active: z.boolean().optional() }).strict().parse(req.body);
+  const row = await PlatformPolicy.findByIdAndUpdate(id.parse(req.params.id), { $set: input }, { new: true, runValidators: true });
+  ensure(row, 404, 'NOT_FOUND');
+  res.json(row);
+});
+adminRoutes.delete('/policies/:id', async (req, res) => {
+  const row = await PlatformPolicy.findByIdAndDelete(id.parse(req.params.id));
+  ensure(row, 404, 'NOT_FOUND');
+  res.sendStatus(204);
+});
 
 adminRoutes.get('/import/providers', async (_req, res) => {
   const providers = [
@@ -82,16 +111,23 @@ adminRoutes.get('/songs', controller.getSongs);
 for (const [path, { model: Model, schema }] of Object.entries(resources)) {
   adminRoutes.get(`/${path}`, async (req, res) => {
     const q = page.parse(req.query);
-    const rows = await Model.find()
-      .sort({ createdAt: -1 })
-      .skip((q.page - 1) * q.limit)
-      .limit(q.limit)
-      .lean();
+    const [rows, total] = await Promise.all([
+      Model.find()
+        .sort({ createdAt: -1 })
+        .skip((q.page - 1) * q.limit)
+        .limit(q.limit)
+        .lean(),
+      Model.countDocuments(),
+    ]);
     res.json({
       data: rows.map((row: any) => {
         const { _id, ...fields } = row;
         return { ...fields, mongoId: String(_id) };
       }),
+      page: q.page,
+      limit: q.limit,
+      total,
+      pages: Math.ceil(total / q.limit),
     });
   });
   adminRoutes.get(`/${path}/:id`, async (req, res) => {
@@ -189,6 +225,7 @@ adminRoutes.delete('/songs/:id', async (req, res) => {
 });
 adminRoutes.delete('/playlists/:id', controller.deletePlaylistsId);
 adminRoutes.get('/users', controller.getUsers);
+adminRoutes.get('/dashboard', controller.getDashboardOverview);
 adminRoutes.patch('/users/:id', controller.patchUsersId);
 adminRoutes.put('/licenses/:songId', controller.putLicensesSongId);
 adminRoutes.get('/licenses', controller.getLicenses);
