@@ -63,6 +63,29 @@ export const getLicenses: RequestHandler = async (req, res) => {
       .limit(q.limit),
   });
 };
+export const getSongs: RequestHandler = async (req, res) => {
+  const query = page.extend({
+    q: z.string().trim().max(200).optional(),
+    processing: z.enum(['pending', 'processing', 'ready', 'failed']).optional(),
+    published: z.enum(['true', 'false']).optional(),
+    quality: z.enum(['64', '128', '192']).optional(),
+  }).parse(req.query);
+  const filter: Record<string, any> = {
+    ...(query.processing ? { processing: query.processing } : {}),
+    ...(query.published !== undefined ? { published: query.published === 'true' } : {}),
+    ...(query.quality ? { 'audio.quality': query.quality } : {}),
+    ...(query.q ? { $or: [
+      { title: { $regex: query.q, $options: 'i' } },
+      { language: { $regex: query.q, $options: 'i' } },
+      { genre: { $regex: query.q, $options: 'i' } },
+    ] } : {}),
+  };
+  const [data, total] = await Promise.all([
+    Song.find(filter).sort({ createdAt: -1, _id: -1 }).skip((query.page - 1) * query.limit).limit(query.limit).lean(),
+    Song.countDocuments(filter),
+  ]);
+  res.json({ data: data.map(({ _id, ...fields }: any) => ({ ...fields, mongoId: String(_id) })), page: query.page, limit: query.limit, total, pages: Math.ceil(total / query.limit) });
+};
 export const getSongsIdPreview: RequestHandler = async (req, res) => {
   const song: any = await Song.findById(id.parse(req.params.id)).select('+sourceFileId');
   ensure(song?.processing === 'ready', 404, 'AUDIO_NOT_READY');

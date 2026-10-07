@@ -78,6 +78,7 @@ const resources: Record<string, { model: any; schema: z.AnyZodObject }> = {
       .strict(),
   },
 };
+adminRoutes.get('/songs', controller.getSongs);
 for (const [path, { model: Model, schema }] of Object.entries(resources)) {
   adminRoutes.get(`/${path}`, async (req, res) => {
     const q = page.parse(req.query);
